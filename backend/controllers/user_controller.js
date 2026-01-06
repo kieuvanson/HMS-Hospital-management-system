@@ -4,7 +4,7 @@ import User from '../models/User_Model.js';
 export const getUserProfile= async(req,res)=>{
     try {
      
-        const UserProfile=await User.findById(req.user.userId).select('-hashpassword');
+        const UserProfile=await User.findById(req.user.id).select('-hashpassword');
         if(!UserProfile){
             return res.status(404).json({message:"Người dùng không tồn tại"});
         }

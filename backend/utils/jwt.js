@@ -1,23 +1,25 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
-const accessTokenTTL= '15m';
+const ACCESS_TOKEN_TTL= '15m';
 const refreshTokenTTL= 12*24*60*60*1000; 
 export const createAccessToken=(user) =>
-         jwt.sign({
-            userId: user._id,
-            role:user.role
+           jwt.sign(
+        {
+            id: user._id,      // ✅ Dùng id (không có underscore) để decode dễ hơn
+            role: user.role
         },
         process.env.ACCESS_TOKEN_SECRET,
-        {expiresIn:accessTokenTTL});
+        { expiresIn: ACCESS_TOKEN_TTL }
+    );
 export const createrefreshToken=() => crypto.randomBytes(40).toString('hex');
 
 export const saveRefreshToken = async (user, refreshToken, res) => {
   await Session.create({
-    userId: user._id,
-    role: user.role,
-    refreshToken,
-    expiresAt: new Date(Date.now() + refreshTokenTTL),
+    userId: user._id,  // ✅ Đổi từ id sang userId để rõ ràng
+            role: user.role,
+            refreshToken,
+            expiresAt: new Date(Date.now() + refreshTokenTTL),
   });
 
   res.cookie('refreshToken', refreshToken, {

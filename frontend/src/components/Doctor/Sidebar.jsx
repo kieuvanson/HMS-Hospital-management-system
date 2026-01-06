@@ -12,8 +12,18 @@ import {
   LogOut
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ doctor, loading }) => {
   const location = useLocation();
+  const displayName = doctor?.name || 'Đang tải...';
+  const subtitle = doctor?.role ? doctor.role : (doctor?.email || 'Nội tổng quát');
+  const initials = doctor?.name
+    ? doctor.name
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part[0]?.toUpperCase())
+        .join('')
+        .slice(0, 2)
+    : 'BS';
   
   const navItems = [
     { 
@@ -67,11 +77,11 @@ const Sidebar = () => {
         {/* Thông tin bác sĩ */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-[#334155]">
           <div className="flex items-center justify-center bg-[#3B82F6] text-white rounded-full h-10 w-10 font-bold">
-            BS
+            {loading ? '...' : initials}
           </div>
           <div>
-            <p className="text-sm font-medium text-[#F1F5F9]">BS. Nguyễn Văn A</p>
-            <p className="text-xs text-[#64748B]">Nội tổng quát</p>
+            <p className="text-sm font-medium text-[#F1F5F9]">BS. {displayName}</p>
+            <p className="text-xs text-[#64748B]">{subtitle}</p>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import AuthPage from './components/Auth/indexAuth';
 import DoctorLayout from './components/Doctor/DoctorLayout';
 import DoctorDashboard from './pages/doctor/Dashboard';
+import NewPatientRecord from './pages/doctor/NewPatientRecord';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/doctor" element={<DoctorLayout />}>
             <Route index element={<Navigate to="/doctor/dashboard" replace />} />
             <Route path="dashboard" element={<DoctorDashboard />} />
+            <Route path="patients/new" element={<NewPatientRecord />} />
             {/* Thêm các route khác cho bác sĩ ở đây */}
           </Route>
         </Routes>

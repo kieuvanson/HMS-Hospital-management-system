@@ -24,8 +24,12 @@ export default function Login({ onSwitchToSignup }) {
         password: formData.password
       });
       
-      // Lưu token vào localStorage
-      localStorage.setItem('token', response.token);
+      // Lưu token vào localStorage (giữ cả key cũ để tương thích)
+      const tokenToStore = response?.accessToken || response?.token;
+      if (tokenToStore) {
+        localStorage.setItem('accessToken', tokenToStore);
+        localStorage.setItem('token', tokenToStore);
+      }
       
       try {
         // Kiểm tra định dạng token

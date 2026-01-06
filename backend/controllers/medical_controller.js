@@ -1,7 +1,9 @@
 import MedicalRecord from "../models/medical_record.js";
-
 export const createMedicalRecord = async (req, res) => {
+
     try {
+        const doctorId = req.user._id;
+        console.log('5. doctorId extracted:', doctorId);
         const {
             patientId,
             visitDate,
@@ -19,13 +21,17 @@ export const createMedicalRecord = async (req, res) => {
             followUpDate,
             status
         } = req.body;
-        const doctorId = req.user._id; // Lấy doctorId từ người dùng đã xác thực
+
+
         // Validate required fields
-        if (!patientId || !doctorId || !visitDate || !chiefComplaint || !diagnosis) {
-            return res.status(400).json({ message: "Missing required fields." });
+        if (!patientId || !visitDate || !chiefComplaint || !diagnosis) {
+            return res.status(400).json({ 
+                message: "Thiếu thông tin bắt buộc",
+                required: ["patientId", "visitDate", "chiefComplaint", "diagnosis"]
+            });
         }
 
-        // Create the medical record
+       
         const newRecord = await MedicalRecord.create({
             patientId,
             doctorId,
@@ -51,6 +57,15 @@ export const createMedicalRecord = async (req, res) => {
         });
     } catch (error) {
         console.error("Lỗi tạo hồ sơ y tế:", error);
+        
+        // ✅ Trả về lỗi chi tiết hơn
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                message: "Dữ liệu không hợp lệ",
+                errors: Object.values(error.errors).map(e => e.message)
+            });
+        }
+        
         return res.status(500).json({
             message: "Lỗi máy chủ, vui lòng thử lại sau"
         });
@@ -59,11 +74,27 @@ export const createMedicalRecord = async (req, res) => {
 
 export const getMedicalRecords = async (req, res) => {
     try {
-        const medicalRecords = await MedicalRecord.find();
-        return res.status(200).json(medicalRecords);
+        const doctorId = req.user._id;
+        const userRole = req.user.role;
+
+        // ✅ Bác sĩ chỉ xem hồ sơ của mình, admin xem tất cả
+        const query = userRole === 'admin' ? {} : { doctorId };
+
+        const medicalRecords = await MedicalRecord.find(query)
+            .populate('patientId', 'name age gender') // ✅ Thêm thông tin bệnh nhân
+            .populate('doctorId', 'name specialty') // ✅ Thêm thông tin bác sĩ
+            .sort({ visitDate: -1 }); // ✅ Sắp xếp mới nhất trước
+
+        return res.status(200).json({
+            message: "Lấy danh sách hồ sơ thành công",
+            count: medicalRecords.length,
+            data: medicalRecords
+        });
     } catch (error) {
         console.error("Lỗi lấy danh sách hồ sơ y tế:", error);
-        return res.status(500).json({ message: "Lỗi máy chủ, vui lòng thử lại sau" });
+        return res.status(500).json({ 
+            message: "Lỗi máy chủ, vui lòng thử lại sau" 
+        });
     }
 };
 

@@ -10,6 +10,17 @@ const api = axios.create({
   withCredentials: true // Important for cookies/sessions
 });
 
+// Đính kèm access token cho mọi request nếu có
+api.interceptors.request.use((config) => {
+  // Ưu tiên accessToken mới, fallback sang token cũ nếu còn
+  const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
+  if (accessToken) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
+
 // Add response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
@@ -34,6 +45,20 @@ export const authAPI = {
       email: credentials.email,
       password: credentials.password
     });
+    return data;
+  }
+};
+
+export const userAPI = {
+  getProfile: async () => {
+    const { data } = await api.get('/user/profile');
+    return data.user;
+  }
+};
+
+export const medicalAPI = {
+  createRecord: async (payload) => {
+    const { data } = await api.post('/medical', payload);
     return data;
   }
 };
