@@ -6,6 +6,11 @@ const appointmentSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  doctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   doctorProfileId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DoctorProfile',
@@ -98,7 +103,7 @@ const appointmentSchema = new mongoose.Schema({
 // Unique constraint: không được đặt trùng slot
 appointmentSchema.index(
   { 
-    doctorProfileId: 1, 
+    doctorId: 1, 
     appointmentDate: 1, 
     appointmentTime: 1 
   },
@@ -112,6 +117,7 @@ appointmentSchema.index(
 
 // Index cho query
 appointmentSchema.index({ patientId: 1, appointmentDate: -1 });
+appointmentSchema.index({ doctorId: 1, appointmentDate: 1, status: 1 });
 appointmentSchema.index({ doctorProfileId: 1, appointmentDate: 1, status: 1 });
 appointmentSchema.index({ status: 1, appointmentDate: 1 });
 appointmentSchema.index({ createdAt: -1 });

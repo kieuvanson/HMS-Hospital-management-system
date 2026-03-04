@@ -19,11 +19,7 @@ export const protectedRoute = async(req, res, next) => {
             });
         }
         req.user = user;
-        console.log('✅ req.user from DB:', {
-            _id: req.user._id,
-            email: req.user.email,
-            role: req.user.role
-        });
+       
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Token không hợp lệ hoặc hết hạn' });

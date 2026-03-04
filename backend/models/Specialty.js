@@ -15,6 +15,11 @@ const specialtySchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  departmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+    required: false
+  },
   icon: String, // URL hoặc tên file
   displayOrder: {
     type: Number,

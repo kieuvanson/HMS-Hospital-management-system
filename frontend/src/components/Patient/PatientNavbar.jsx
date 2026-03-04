@@ -28,6 +28,14 @@ const PatientNavbar = () => {
       .join('')
       .slice(0, 2);
 
+  // Helper để lấy link avatar đầy đủ
+  const getAvatarSrc = (avatarUrl) => {
+    if (!avatarUrl) return '';
+    if (avatarUrl.startsWith('blob:')) return avatarUrl;
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    return `http://localhost:5000${avatarUrl}`;
+  };
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-20">
       {/* Top bar */}
@@ -54,15 +62,15 @@ const PatientNavbar = () => {
       {/* Main bar */}
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center gap-6">
         {/* Logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <Link to="/patient/home" className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity">
           <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold">
             Y
           </div>
           <div className="leading-tight">
-            <p className="font-bold text-primary-700 text-sm">Hệ thống Y tế HMS</p>
+            <p className="font-bold text-primary-700 text-sm">MediCore</p>
             <p className="text-[11px] text-gray-500">Chăm sóc sức khỏe toàn diện</p>
           </div>
-        </div>
+        </Link>
 
         {/* Search */}
         <div className="flex-1 max-w-xl">
@@ -89,8 +97,12 @@ const PatientNavbar = () => {
           </div>
 
           <Link to="/patient/profile" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-xs font-semibold group-hover:bg-primary-600 group-hover:text-white transition-colors">
-              {initials || 'BN'}
+            <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
+              {user.avatarUrl ? (
+                <img src={getAvatarSrc(user.avatarUrl)} alt="avatar" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <span className="text-primary-700 text-xs font-semibold">{initials || 'BN'}</span>
+              )}
             </div>
             <div className="hidden sm:block leading-tight max-w-[140px] text-left">
               <p className="text-xs font-medium text-gray-800 truncate group-hover:text-primary-700">

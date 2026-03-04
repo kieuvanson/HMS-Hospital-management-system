@@ -18,12 +18,38 @@ const userSchema = new mongoose.Schema({
     },
     avatarUrl:{
         type:String,
-
+    },
+    cccd: {
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true
+    },
+    gender: {
+        type: String,
+        enum: ['Nam', 'Nữ', 'Khác'],
+        default: 'Khác'
+    },
+    age: {
+        type: Number,
+        min: 18,
+        max: 100
+    },
+    address: {
+        type: String,
+        trim: true
+    },
+    dateOfBirth: {
+        type: Date
     },
     phone:{
         type:String,
         sparse:true,//Cho phép giá trị null trong trường unique
 
+    },
+    department: {
+        type: String,
+        trim: true
     },
     timestramp:{
         type:Date,

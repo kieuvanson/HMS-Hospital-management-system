@@ -1,9 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Bell } from 'lucide-react';
-import logo from "../../assets/img/system/logo.jpg";
+import { LogOut, User, Bell, Heart } from 'lucide-react';
+
+const BACKEND_URL = 'http://localhost:5000';
+
+const getAvatarUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `${BACKEND_URL}${url}`;
+  return url;
+};
+
 const Header = ({ doctorName, onLogout }) => {
   const navigate = useNavigate();
+  const [avatarUrl, setAvatarUrl] = useState(null);
+
+  // Lắng nghe event profileUpdated từ DoctorProfile
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      setAvatarUrl(currentUser.avatarUrl);
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    // Lấy avatar từ localStorage lần đầu
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setAvatarUrl(currentUser.avatarUrl);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, []);
 
   const handleLogout = () => {
     // Xóa token local và chuyển hướng
@@ -21,14 +49,12 @@ const Header = ({ doctorName, onLogout }) => {
       <div className="w-full px-3 sm:px-4 lg:px-6 flex items-center justify-between h-16 gap-3">
         {/* Logo */}
        <div className="flex items-center flex-shrink-0 gap-3">
-  <div className="bg-white border-2 border-blue-500 rounded-lg p-2 flex-shrink-0">
-    <img 
-      src={logo}
-      alt="Hospital Logo" 
-      className="h-10 w-10 object-contain"
+  <div className="bg-white border-2 border-blue-500 rounded-2xl p-2 flex-shrink-0 shadow-md">
+    <Heart 
+      className="h-6 w-6 text-red-500"
     />
   </div>
-  <span className="text-xl font-bold text-gray-800 whitespace-nowrap">Hệ thống HSM</span>
+  <span className="text-xl font-bold text-gray-800 whitespace-nowrap">MediCore</span>
 </div>
         {/* Breadcrumb */}
         <nav className="hidden md:flex items-center text-sm text-gray-500 whitespace-nowrap">
@@ -59,15 +85,19 @@ const Header = ({ doctorName, onLogout }) => {
         <div className="flex items-center gap-4 flex-shrink-0">
           <div className="flex items-center gap-3 pr-3 border-r border-gray-200">
             <div
-              className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold uppercase cursor-pointer"
+              className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold uppercase cursor-pointer overflow-hidden"
               onClick={handleDoctorProfileClick}
             >
-              {(doctorName || 'BS')
-                .split(' ')
-                .filter(Boolean)
-                .map((p) => p[0]?.toUpperCase())
-                .join('')
-                .slice(0, 2)}
+              {avatarUrl ? (
+                <img src={getAvatarUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                (doctorName || 'BS')
+                  .split(' ')
+                  .filter(Boolean)
+                  .map((p) => p[0]?.toUpperCase())
+                  .join('')
+                  .slice(0, 2)
+              )}
             </div>
             <div className="text-right">
               <p

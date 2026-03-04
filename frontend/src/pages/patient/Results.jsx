@@ -25,7 +25,7 @@ const Results = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4 text-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <p className="text-secondary-600">
-            Xem nhanh các kết quả cận lâm sàng đã thực hiện tại hệ thống HMS.
+            Xem nhanh các kết quả cận lâm sàng đã thực hiện tại hệ thống MediCore.
           </p>
           <button className="px-4 py-2 rounded-full border border-primary-200 text-primary-700 hover:bg-primary-50">
             Tải tất cả dưới dạng PDF

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { authAPI } from '../../services/api';
+import { authAPI, userAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 
@@ -40,13 +40,16 @@ export default function Login({ onSwitchToSignup }) {
         // Giải mã token để lấy thông tin người dùng
         const decodedToken = jwtDecode(response.accessToken);
         
-        // Lưu thông tin người dùng vào localStorage
-        localStorage.setItem('user', JSON.stringify(decodedToken));
+        // Lưu thông tin người dùng vào localStorage (gọi API để lấy avatarUrl)
+        const userInfo = await userAPI.getProfile();
+        localStorage.setItem('user', JSON.stringify(userInfo));
         
         toast.success('Đăng nhập thành công!');
         
         // Chuyển hướng dựa trên vai trò
-        if (decodedToken.role === 'doctor' || decodedToken.role === 'Admin') {
+        if (decodedToken.role === 'admin' || decodedToken.role === 'Admin') {
+          window.location.href = '/admin/dashboard';
+        } else if (decodedToken.role === 'doctor') {
           window.location.href = '/doctor/dashboard';
         } else if (decodedToken.role === 'patients') {
           window.location.href = '/patient/home';

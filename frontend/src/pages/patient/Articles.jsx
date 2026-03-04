@@ -31,7 +31,7 @@ const Articles = () => {
     <div className="max-w-6xl mx-auto px-4 lg:px-8 py-8 space-y-5">
       <h1 className="text-2xl font-semibold text-secondary-900">Bài viết &amp; tin tức y tế</h1>
       <p className="text-sm text-secondary-600">
-        Cập nhật kiến thức y khoa, lời khuyên chăm sóc sức khỏe từ đội ngũ bác sĩ của HMS.
+        Cập nhật kiến thức y khoa, lời khuyên chăm sóc sức khỏe từ đội ngũ bác sĩ của MediCore.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

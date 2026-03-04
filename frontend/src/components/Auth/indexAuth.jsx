@@ -23,8 +23,8 @@ export default function AuthPage() {
                 <Activity className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">HMS_Hospital management system</h1>
-                <p className="text-blue-100 text-sm">Electronic hospital management system</p>
+                <h1 className="text-2xl font-bold">MediCore – Hospital Management System</h1>
+                <p className="text-blue-100 text-sm">Hệ thống quản lý bệnh viện điện tử hiện đại</p>
               </div>
             </div>
             
@@ -33,7 +33,7 @@ export default function AuthPage() {
                 Quản lý tác vụ y tế điện tử chuyên nghiệp
               </h2>
               <p className="text-blue-50 leading-relaxed">
-                Hệ thống HMS hiện đại, bảo mật cao, giúp tối ưu hóa quy trình khám chữa bệnh và quản lý thông tin bệnh nhân.
+                Hệ thống MediCore hiện đại, bảo mật cao, giúp tối ưu hóa quy trình khám chữa bệnh và quản lý thông tin bệnh nhân.
               </p>
             </div>
           </div>
@@ -56,7 +56,7 @@ export default function AuthPage() {
             {/* Mobile Logo */}
             <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
               <Activity className="w-7 h-7 text-blue-600" />
-              <span className="text-xl font-bold text-gray-800">MedCare HMS</span>
+              <span className="text-xl font-bold text-gray-800">MediCore</span>
             </div>
 
             {isLogin ? (

@@ -10,14 +10,15 @@ const doctorProfileSchema = new mongoose.Schema({
   specialtyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Specialty',
-    required: true
+    required: false
   },
   
   // ===== THÔNG TIN CHUYÊN MÔN =====
   licenseNumber: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
+    sparse: true,
     trim: true
   },
   experienceYears: {
@@ -48,8 +49,9 @@ const doctorProfileSchema = new mongoose.Schema({
   // ===== THÔNG TIN KHÁM =====
   consultationFee: {
     type: Number,
-    required: true,
-    min: 0
+    required: false,
+    min: 0,
+    default: 0
   },
   bio: {
     type: String,

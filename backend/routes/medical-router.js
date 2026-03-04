@@ -1,7 +1,7 @@
 import express from 'express';
 import { protectedRoute } from '../middleware/authMiddleware.js';
 import {createMedicalRecord,getMedicalRecordById,getMedicalRecords,updateMedicalRecord,deleteMedicalRecord } from '../controllers/medical_controller.js';
-import { isDoctorRole, isPatientRole, setMedicalRecordFilter } from '../middleware/medical_middleware.js';
+import { isDoctorRole, isPatientRole, setMedicalRecordFilter } from '../middleware/roleMiddleware.js';
 const router_medical = express.Router();
 
 router_medical.post("/records", protectedRoute, isDoctorRole, createMedicalRecord);

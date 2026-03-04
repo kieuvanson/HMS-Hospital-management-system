@@ -7,7 +7,7 @@ const Reviews = () => {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-sm space-y-4">
         <p className="text-secondary-600">
-          Cảm ơn bạn đã sử dụng dịch vụ của HMS. Hãy chia sẻ cảm nhận để chúng tôi cải thiện tốt
+          Cảm ơn bạn đã sử dụng dịch vụ của MediCore. Hãy chia sẻ cảm nhận để chúng tôi cải thiện tốt
           hơn.
         </p>
 

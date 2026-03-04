@@ -1,5 +1,4 @@
-import React from 'react';
-import logo from '../../assets/img/system/logo.jpg';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -10,11 +9,23 @@ import {
   Settings, 
   Stethoscope,
   ClipboardList,
-  LogOut
+  LogOut,
+  Heart
 } from 'lucide-react';
+
+const BACKEND_URL = 'http://localhost:5000';
+
+const getAvatarUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `${BACKEND_URL}${url}`;
+  return url;
+};
 
 const Sidebar = ({ doctor, loading }) => {
   const location = useLocation();
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  
   const displayName = doctor?.name || 'Đang tải...';
   const subtitle = doctor?.role ? doctor.role : (doctor?.email || 'Nội tổng quát');
   const initials = doctor?.name
@@ -25,6 +36,24 @@ const Sidebar = ({ doctor, loading }) => {
         .join('')
         .slice(0, 2)
     : 'BS';
+
+  // Lắng nghe event profileUpdated
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      setAvatarUrl(currentUser.avatarUrl);
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    
+    // Lấy avatar từ localStorage lần đầu
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setAvatarUrl(currentUser.avatarUrl);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, []);
   
   const navItems = [
     { 
@@ -69,20 +98,14 @@ const Sidebar = ({ doctor, loading }) => {
       <div className="flex flex-col w-64 bg-[#1E293B] text-[#F1F5F9]">
         {/* Logo và tên hệ thống */}
         <div className="flex items-center justify-center py-4 border-b border-[#334155]">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="HSM Logo" className="h-12 w-12 object-contain mix-blend-multiply" />
-            <h1 className="text-lg font-bold text-[#F1F5F9]">Hệ thống HSM</h1>
-          </div>
-        </div>
-
-        {/* Thông tin bác sĩ */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-[#334155]">
-          <div className="flex items-center justify-center bg-[#3B82F6] text-white rounded-full h-10 w-10 font-bold">
-            {loading ? '...' : initials}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-[#F1F5F9]">BS. {displayName}</p>
-            <p className="text-xs text-[#64748B]">{subtitle}</p>
+          <div className="flex items-center gap-3 w-full px-4">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md">
+              <Heart className="h-6 w-6 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-lg font-bold text-[#F1F5F9]">MediCore</h1>
+              <p className="text-xs text-[#64748B]">Quản lý bệnh viện</p>
+            </div>
           </div>
         </div>
 
