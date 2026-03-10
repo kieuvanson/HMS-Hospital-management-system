@@ -8,8 +8,10 @@ import {
   History,
   ChevronLeft,
   ChevronRight,
+  X,
+  Search,
 } from 'lucide-react';
-import { doctorAPI } from '../../services/api';
+import { doctorAPI, appointmentAPI } from '../../services/api';
 
 // Component này được render bên trong `DoctorLayout`,
 // vì vậy không cần tự render Sidebar và Header nữa.
@@ -18,10 +20,19 @@ const Patients = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+
   // Trạng thái lọc theo ngày / tháng / lịch sử
   const [viewMode, setViewMode] = useState('today'); // 'today' | 'date' | 'month' | 'history'
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
+
+  // Tìm kiếm
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,12 +56,27 @@ const Patients = () => {
     fetchPatients();
   }, []);
 
-  const totalPages = Math.ceil(patients.length / pageSize);
+  // Lọc bệnh nhân theo từ khóa tìm kiếm
+  const filteredPatients = patients.filter((patient) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      patient.name.toLowerCase().includes(query) ||
+      patient.phone.toLowerCase().includes(query) ||
+      patient.email.toLowerCase().includes(query)
+    );
+  });
 
-  const paginatedPatients = patients.slice(
+  const totalPages = Math.ceil(filteredPatients.length / pageSize);
+
+  const paginatedPatients = filteredPatients.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
+  };
 
   const handleChangePage = (page) => {
     if (page < 1 || page > totalPages) return;
@@ -87,8 +113,18 @@ const Patients = () => {
     }
   };
 
-  const handleViewInfo = (id) => {
-    alert(`Xem thông tin bệnh nhân ${id}`);
+  const handleViewInfo = async (patient) => {
+    setSelectedPatient(patient);
+    setAppointmentsLoading(true);
+    try {
+      const data = await appointmentAPI.getAppointmentsByPatient(patient._id);
+      setAppointments(data || []);
+    } catch (err) {
+      setAppointments([]);
+    } finally {
+      setAppointmentsLoading(false);
+      setShowModal(true);
+    }
   };
 
   const handleCreateRecord = (id) => {
@@ -159,6 +195,28 @@ const Patients = () => {
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6">
+        {/* Thanh tìm kiếm */}
+        <div className="mb-6 flex items-center gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, số điện thoại, email..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+          </div>
+          {searchQuery && (
+            <button
+              onClick={() => handleSearch('')}
+              className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+            >
+              Xóa
+            </button>
+          )}
+        </div>
+
         {/* Thanh chọn ngày / tháng tuỳ chế độ */}
         {viewMode === 'date' && (
           <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -211,7 +269,21 @@ const Patients = () => {
           </div>
         )}
 
-        {!loading && patients.length > 0 && (
+        {!loading && !error && patients.length > 0 && filteredPatients.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">
+              Không tìm thấy bệnh nhân phù hợp với từ khóa "{searchQuery}"
+            </p>
+            <button
+              onClick={() => handleSearch('')}
+              className="mt-4 px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Xóa bộ lọc tìm kiếm
+            </button>
+          </div>
+        )}
+
+        {!loading && patients.length > 0 && filteredPatients.length > 0 && (
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-gray-100 text-left">
@@ -242,7 +314,7 @@ const Patients = () => {
                 <td className="border px-4 py-3 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <button
-                      onClick={() => handleViewInfo(patient.id)}
+                      onClick={() => handleViewInfo(patient)}
                       className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors text-xs"
                       title="Xem thông tin"
                     >
@@ -274,15 +346,20 @@ const Patients = () => {
         )}
 
         {/* Phân trang */}
-        {!loading && patients.length > 0 && (
+        {!loading && patients.length > 0 && filteredPatients.length > 0 && (
         <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-500">
             Hiển thị{' '}
             <span className="font-semibold">
-              {(currentPage - 1) * pageSize + 1} -{' '}
-              {Math.min(currentPage * pageSize, patients.length)}
+              {filteredPatients.length === 0 ? 0 : (currentPage - 1) * pageSize + 1} -{' '}
+              {Math.min(currentPage * pageSize, filteredPatients.length)}
             </span>{' '}
-            trên tổng số <span className="font-semibold">{patients.length}</span> bệnh nhân
+            trên tổng số <span className="font-semibold">{filteredPatients.length}</span> bệnh nhân
+            {searchQuery && (
+              <span className="ml-2 text-blue-600">
+                (Tìm kiếm: "{searchQuery}")
+              </span>
+            )}
           </p>
 
           <div className="flex items-center gap-1">
@@ -330,6 +407,117 @@ const Patients = () => {
         </div>
         )}
       </div>
+
+      {/* Modal Chi tiết lịch hẹn */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 pt-20">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-800">Chi tiết lịch hẹn - {selectedPatient?.name}</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              {/* Thông tin bệnh nhân */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-blue-900 mb-3">Thông tin bệnh nhân</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Tên:</p>
+                    <p className="font-semibold text-gray-800">{selectedPatient?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Tuổi:</p>
+                    <p className="font-semibold text-gray-800">{selectedPatient?.age}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Giới tính:</p>
+                    <p className="font-semibold text-gray-800">{selectedPatient?.gender}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Số điện thoại:</p>
+                    <p className="font-semibold text-gray-800">{selectedPatient?.phone}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-600">Email:</p>
+                    <p className="font-semibold text-gray-800">{selectedPatient?.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Danh sách lịch hẹn */}
+              <div>
+                <h3 className="font-semibold text-gray-800 mb-4">Lịch hẹn</h3>
+                
+                {appointmentsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="spinner border-4 border-t-4 border-gray-200 border-t-blue-500 rounded-full w-8 h-8 animate-spin mx-auto mb-2"></div>
+                    <p className="text-gray-500">Đang tải lịch hẹn...</p>
+                  </div>
+                ) : appointments.length === 0 ? (
+                  <div className="text-center py-6 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">Chưa có lịch hẹn nào</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {appointments.map((appointment) => (
+                      <div key={appointment._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-5 w-5 text-blue-500" />
+                            <span className="font-semibold text-gray-800">
+                              {new Date(appointment.appointmentDate).toLocaleDateString('vi-VN')} {appointment.appointmentTime}
+                            </span>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            appointment.status === 'pending' || appointment.status === 'confirmed' ? 'bg-yellow-100 text-yellow-800' :
+                            appointment.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                            appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {appointment.status === 'pending' ? 'Chờ xác nhận' :
+                             appointment.status === 'confirmed' ? 'Đã xác nhận' :
+                             appointment.status === 'in_progress' ? 'Đang khám' :
+                             appointment.status === 'completed' ? 'Đã hoàn thành' :
+                             appointment.status === 'cancelled' ? 'Đã hủy' :
+                             appointment.status === 'no_show' ? 'Không đến' : appointment.status}
+                          </span>
+                        </div>
+                        <div className="ml-7 space-y-2 text-sm text-gray-700">
+                          <p><span className="font-semibold">Lý do:</span> {appointment.reason}</p>
+                          {appointment.symptoms && appointment.symptoms.length > 0 && (
+                            <p><span className="font-semibold">Triệu chứng:</span> {appointment.symptoms.join(', ')}</p>
+                          )}
+                          {appointment.notes && (
+                            <p><span className="font-semibold">Ghi chú:</span> {appointment.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex justify-end gap-2 flex-shrink-0">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -168,6 +168,12 @@ export const appointmentAPI = {
     return Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
   },
 
+  // Lấy lịch hẹn của bệnh nhân cụ thể
+  getAppointmentsByPatient: async (patientId) => {
+    const { data } = await api.get(`/appointment/patient/${patientId}`);
+    return Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+  },
+
   // Lấy lịch hẹn của bệnh nhân
   getPatientAppointments: async (params) => {
     const { data } = await api.get('/appointment/list', { params });

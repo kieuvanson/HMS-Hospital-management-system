@@ -141,6 +141,27 @@ export const getPatientAppointments = async (req, res) => {
   }
 };
 
+// 2B. LẤY DANH SÁCH LỊCH HẸN CỦA BẠC SĨ CHO MỘT BỆNH NHÂN CỤ THỂ
+export const getAppointmentsByPatient = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    
+    // Verify the doctor is the current user
+    const doctorId = req.user._id;
+    
+    // Lấy tất cả appointments của bệnh nhân này với bác sĩ hiện tại
+    const appointments = await Appointment.find({ 
+      patientId,
+      doctorId 
+    })
+      .sort({ appointmentDate: -1, appointmentTime: -1 });
+
+    res.json({ data: appointments });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
 // 3. LẤY DANH SÁCH LỊCH HẸN CỦA BÁC SĨ
 export const getDoctorAppointments = async (req, res) => {
   try {
