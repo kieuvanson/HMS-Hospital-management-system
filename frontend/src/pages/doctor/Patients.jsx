@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Eye,
   FilePlus,
@@ -9,54 +9,14 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { doctorAPI } from '../../services/api';
 
 // Component này được render bên trong `DoctorLayout`,
 // vì vậy không cần tự render Sidebar và Header nữa.
 const Patients = () => {
-  // Dữ liệu demo: nhiều bệnh nhân để thấy rõ phần phân trang
-  const patients = [
-    {
-      id: 1,
-      name: 'Nguyễn Văn A',
-      age: 30,
-      gender: 'Nam',
-      phone: '0912345678',
-      status: 'chua_kham',
-    },
-    {
-      id: 2,
-      name: 'Trần Thị B',
-      age: 25,
-      gender: 'Nữ',
-      phone: '0987654321',
-      status: 'da_kham',
-    },
-    {
-      id: 3,
-      name: 'Lê Văn C',
-      age: 40,
-      gender: 'Nam',
-      phone: '0909123123',
-      status: 'dang_kham',
-    },
-    {
-      id: 4,
-      name: 'Phạm Thị D',
-      age: 35,
-      gender: 'Nữ',
-      phone: '0911000001',
-      status: 'da_huy',
-    },
-    // Các dòng dưới chỉ để minh họa nhiều bản ghi (UI), bạn có thể thay bằng dữ liệu thật
-    ...Array.from({ length: 18 }).map((_, index) => ({
-      id: 5 + index,
-      name: `Bệnh nhân ${5 + index}`,
-      age: 20 + ((index * 3) % 40),
-      gender: index % 2 === 0 ? 'Nam' : 'Nữ',
-      phone: `09${(1000000 + index * 1234).toString().slice(0, 8)}`,
-      status: ['chua_kham', 'dang_kham', 'da_kham', 'da_huy'][index % 4],
-    })),
-  ];
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Trạng thái lọc theo ngày / tháng / lịch sử
   const [viewMode, setViewMode] = useState('today'); // 'today' | 'date' | 'month' | 'history'
@@ -66,6 +26,25 @@ const Patients = () => {
   // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  // Fetch danh sách bệnh nhân từ API
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        setLoading(true);
+        const data = await doctorAPI.getPatients();
+        setPatients(data || []);
+        setError(null);
+      } catch (err) {
+        setError(err.message || 'Không thể tải danh sách bệnh nhân');
+        setPatients([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPatients();
+  }, []);
+
   const totalPages = Math.ceil(patients.length / pageSize);
 
   const paginatedPatients = patients.slice(
@@ -210,6 +189,29 @@ const Patients = () => {
           </div>
         )}
 
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-center">
+              <div className="spinner border-4 border-t-4 border-gray-200 border-t-blue-500 rounded-full w-12 h-12 animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-500">Đang tải danh sách bệnh nhân...</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <p className="text-red-800 font-medium">Lỗi:</p>
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && patients.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Không có bệnh nhân nào</p>
+          </div>
+        )}
+
+        {!loading && patients.length > 0 && (
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-gray-100 text-left">
@@ -269,8 +271,10 @@ const Patients = () => {
             ))}
           </tbody>
         </table>
+        )}
 
         {/* Phân trang */}
+        {!loading && patients.length > 0 && (
         <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-500">
             Hiển thị{' '}
@@ -324,6 +328,7 @@ const Patients = () => {
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

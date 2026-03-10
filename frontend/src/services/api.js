@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -152,6 +152,12 @@ export const doctorAPI = {
   getBySpecialty: async (specialtyId) => {
     const { data } = await api.get(`/doctor/by-specialty?specialtyId=${specialtyId}`);
     return data;
+  },
+
+  // Lấy danh sách bệnh nhân của bác sĩ
+  getPatients: async (params) => {
+    const { data } = await api.get('/doctor/patients', { params });
+    return Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
   }
 };
 
@@ -267,6 +273,8 @@ export const departmentAPI = {
     const { data } = await api.delete(`/department/${departmentId}`);
     return data.data || data;
   }
+
 };
+
 
 export default api;
