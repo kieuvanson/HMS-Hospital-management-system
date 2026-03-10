@@ -4,11 +4,9 @@ import {
   LayoutDashboard, 
   Users, 
   Calendar, 
-  FileText, 
   BarChart3, 
   Settings, 
   Stethoscope,
-  ClipboardList,
   LogOut,
   Heart
 } from 'lucide-react';
@@ -67,14 +65,9 @@ const Sidebar = ({ doctor, loading }) => {
       path: '/doctor/patients' 
     },
     { 
-      name: 'Lịch hẹn hôm nay', 
+      name: 'Lịch hẹn', 
       icon: <Calendar className="h-5 w-5" />, 
       path: '/doctor/appointments' 
-    },
-    { 
-      name: 'Đơn thuốc', 
-      icon: <FileText className="h-5 w-5" />, 
-      path: '/doctor/prescriptions' 
     },
     { 
       name: 'Khám bệnh', 
@@ -82,7 +75,7 @@ const Sidebar = ({ doctor, loading }) => {
       path: '/doctor/examinations' 
     },
     { 
-      name: 'Báo cáo thống kê', 
+      name: 'Báo cáo', 
       icon: <BarChart3 className="h-5 w-5" />, 
       path: '/doctor/reports' 
     },
