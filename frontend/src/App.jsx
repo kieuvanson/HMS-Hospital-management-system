@@ -9,6 +9,7 @@ import NewPatientRecord from './pages/doctor/NewPatientRecord';
 import DoctorProfile from './pages/doctor/DoctorProfile';
 import Patients from './pages/doctor/Patients';
 import DoctorAppointments from './pages/doctor/Appointments';
+import DoctorExaminations from './pages/doctor/Examinations';
 import PatientLayout from './components/Patient/PatientLayout';
 import PatientHome from './pages/patient/Home';
 import Profile from './pages/patient/Profile';
@@ -21,6 +22,7 @@ import Notifications from './pages/patient/Notifications';
 import Telemedicine from './pages/patient/Telemedicine';
 import Reviews from './pages/patient/Reviews';
 import Articles from './pages/patient/Articles';
+import Examinations from './pages/patient/Examinations';
 import { userAPI } from './services/api';
 import adminRoutes from './routes/adminRoutes';
 
@@ -70,6 +72,7 @@ function App() {
             <Route path="patients" element={<Patients />} />
             <Route path="patients/new" element={<NewPatientRecord />} />
             <Route path="profile" element={<DoctorProfile />} />
+            <Route path="examinations" element={<DoctorExaminations />} />
           </Route>
 
           {/* Patient Routes */}
@@ -86,6 +89,7 @@ function App() {
             <Route path="telemedicine" element={<Telemedicine />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="articles" element={<Articles />} />
+            <Route path="examinations" element={<Examinations />} />
           </Route>
           {/* Admin Routes */}
           {adminRoutes.map(route => (
