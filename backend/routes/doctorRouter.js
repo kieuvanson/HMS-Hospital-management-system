@@ -1,13 +1,14 @@
 
 import express from 'express';
-import { 
-  getDoctorProfile, 
-  createDoctorProfile, 
-  updateDoctorProfile, 
-  deleteDoctorProfile, 
+import {
+  getDoctorProfile,
+  createDoctorProfile,
+  updateDoctorProfile,
+  deleteDoctorProfile,
   getDoctorsBySpecialty,
   getAllDoctors,
-  getDoctorsByDepartment
+  getDoctorsByDepartment,
+  getpatientsByDoctorId
 } from '../controllers/doctor_Controller.js';
 import { protectedRoute } from '../middleware/authMiddleware.js';
 
@@ -36,5 +37,8 @@ router.put('/profile', protectedRoute, updateDoctorProfile);
 
 // Xóa hồ sơ bác sĩ
 router.delete('/profile', protectedRoute, deleteDoctorProfile);
+// lay benh nhan theo bac si
+router.get('/patients', protectedRoute, getpatientsByDoctorId);
+
 
 export default router;
