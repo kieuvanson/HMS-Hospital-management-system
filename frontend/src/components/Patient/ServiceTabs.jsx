@@ -8,6 +8,7 @@ const ServiceTabs = () => {
     { id: 'home', title: 'Trang chủ', link: '/patient/home' },
     { id: 'appointments', title: 'Đặt lịch khám', link: '/patient/appointments' },
     { id: 'visits', title: 'Lịch khám', link: '/patient/visits' },
+    { id: 'examinations', title: 'Phiếu khám', link: '/patient/examinations' },
     { id: 'results', title: 'Xem kết quả', link: '/patient/results' },
     { id: 'prescriptions', title: 'Đơn thuốc', link: '/patient/prescriptions' },
     { id: 'payments', title: 'Thanh toán', link: '/patient/payments' },
