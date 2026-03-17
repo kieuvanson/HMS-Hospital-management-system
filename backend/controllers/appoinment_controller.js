@@ -2,6 +2,7 @@
 import Appointment from '../models/Appointment.js';
 import DoctorProfile from '../models/DoctorProfile.js';
 import User from '../models/User_Model.js';
+import MedicalRecord from '../models/medical_record.js';
 import { sendAppointmentConfirmation, sendAppointmentReminder } from '../services/emailService.js';
 
 // 1. TẠO LỊCH HẸN MỚI
@@ -513,6 +514,349 @@ export const getAppointmentStats = async (req, res) => {
       revenue: totalRevenue[0]?.total || 0
     });
   } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// ===== EXAMINATION APIs (Trang Khám bệnh) =====
+
+// 11. LẤY DANH SÁCH KHÁM HÔM NAY (bác sĩ)
+export const getTodayExaminations = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
+
+    const { search, status } = req.query;
+
+    // Tính khoảng ngày hôm nay (UTC)
+    const now = new Date();
+    // Lấy ngày theo local (UTC+7), rồi tạo range UTC
+    const todayStart = new Date(now);
+    todayStart.setUTCHours(0, 0, 0, 0);
+    // Điều chỉnh -7h để cover toàn bộ ngày theo giờ VN
+    todayStart.setHours(todayStart.getHours() - 7);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    const query = {
+      doctorId: req.user._id,
+      appointmentDate: { $gte: todayStart, $lt: todayEnd },
+      status: { $in: ['confirmed', 'in_progress', 'completed'] }
+    };
+
+    // Lọc theo status cụ thể nếu có
+    if (status && status !== 'all') {
+      // Map frontend status sang DB status
+      const statusMap = { waiting: 'confirmed', in_progress: 'in_progress', completed: 'completed' };
+      query.status = statusMap[status] || status;
+    }
+
+    let appointments = await Appointment.find(query)
+      .populate('patientId', 'name phone dateOfBirth gender email')
+      .sort({ appointmentTime: 1 });
+
+    // Tìm kiếm theo tên/SĐT/lý do
+    if (search && search.trim()) {
+      const keyword = search.toLowerCase().trim();
+      appointments = appointments.filter(apt => {
+        const patientName = (apt.patientInfo?.name || apt.patientId?.name || '').toLowerCase();
+        const patientPhone = apt.patientInfo?.phone || apt.patientId?.phone || '';
+        const reason = (apt.reason || '').toLowerCase();
+        return patientName.includes(keyword) || patientPhone.includes(keyword) || reason.includes(keyword);
+      });
+    }
+
+    // Tính thống kê (không theo filter)
+    const allToday = await Appointment.find({
+      doctorId: req.user._id,
+      appointmentDate: { $gte: todayStart, $lt: todayEnd },
+      status: { $in: ['confirmed', 'in_progress', 'completed'] }
+    }).select('status');
+
+    const stats = {
+      waiting: allToday.filter(a => a.status === 'confirmed').length,
+      inProgress: allToday.filter(a => a.status === 'in_progress').length,
+      completed: allToday.filter(a => a.status === 'completed').length,
+    };
+
+    // Format dữ liệu trả về cho frontend
+    const data = appointments.map(apt => {
+      const patient = apt.patientId || {};
+      const dob = apt.patientInfo?.dateOfBirth || patient.dateOfBirth;
+      const age = dob ? Math.floor((Date.now() - new Date(dob)) / (365.25 * 24 * 3600 * 1000)) : null;
+
+      return {
+        _id: apt._id,
+        appointmentTime: apt.appointmentTime,
+        appointmentDate: apt.appointmentDate,
+        reason: apt.reason,
+        status: apt.status,  // 'confirmed' | 'in_progress' | 'completed'
+        diagnosis: apt.diagnosis,
+        prescription: apt.prescription,
+        doctorNotes: apt.doctorNotes,
+        followUpDate: apt.followUpDate,
+        followUpInstructions: apt.followUpInstructions,
+        startedAt: apt.startedAt,
+        completedAt: apt.completedAt,
+        patient: {
+          _id: patient._id,
+          name: apt.patientInfo?.name || patient.name,
+          phone: apt.patientInfo?.phone || patient.phone,
+          gender: apt.patientInfo?.gender || patient.gender,
+          age,
+          email: patient.email,
+        }
+      };
+    });
+
+    res.json({ data, stats });
+  } catch (error) {
+    console.error('getTodayExaminations error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// 12. BẮT ĐẦU KHÁM (confirmed → in_progress)
+export const startExamination = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!req.user || req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Không tìm thấy lịch hẹn' });
+    }
+
+    // Kiểm tra đây là bác sĩ phụ trách
+    if (appointment.doctorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Đây không phải lịch hẹn của bạn' });
+    }
+
+    // Chỉ được bắt đầu khi status = confirmed
+    if (appointment.status !== 'confirmed') {
+      return res.status(400).json({ 
+        message: `Không thể bắt đầu khám từ trạng thái ${appointment.status}` 
+      });
+    }
+
+    appointment.status = 'in_progress';
+    appointment.startedAt = new Date();
+    await appointment.save();
+
+    res.json({ 
+      message: 'Bắt đầu khám thành công',
+      data: { _id: appointment._id, status: appointment.status, startedAt: appointment.startedAt }
+    });
+  } catch (error) {
+    console.error('startExamination error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// 13. HOÀN THÀNH KHÁM (in_progress → completed) + Tạo MedicalRecord
+export const completeExamination = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      diagnosis,
+      prescription,      // array: [{ medicationName, dosage, frequency, duration, instructions }]
+      doctorNotes,
+      vitalSigns,        // { bloodPressure: {systolic, diastolic}, heartRate, temperature, weight, height }
+      followUpDate,
+      followUpInstructions,
+      symptoms,
+      icdCode
+    } = req.body;
+
+    if (!req.user || req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
+
+    if (!diagnosis) {
+      return res.status(400).json({ message: 'Chẩn đoán là bắt buộc' });
+    }
+
+    const appointment = await Appointment.findById(id).populate('patientId', 'name phone');
+    if (!appointment) {
+      return res.status(404).json({ message: 'Không tìm thấy lịch hẹn' });
+    }
+
+    if (appointment.doctorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Đây không phải lịch hẹn của bạn' });
+    }
+
+    if (appointment.status !== 'in_progress') {
+      return res.status(400).json({ 
+        message: `Không thể hoàn thành từ trạng thái ${appointment.status}` 
+      });
+    }
+
+    // Cập nhật appointment
+    appointment.status = 'completed';
+    appointment.completedAt = new Date();
+    appointment.diagnosis = diagnosis;
+    appointment.prescription = Array.isArray(prescription)
+      ? prescription.map(p => `${p.medicationName} - ${p.dosage || ''} - ${p.frequency || ''} - ${p.duration || ''}`).join('; ')
+      : (prescription || '');
+    appointment.doctorNotes = doctorNotes;
+    appointment.followUpDate = followUpDate || null;
+    appointment.followUpInstructions = followUpInstructions;
+    await appointment.save();
+
+    // Tạo MedicalRecord
+    const medicalRecord = await MedicalRecord.create({
+      patientId: appointment.patientId._id || appointment.patientId,
+      doctorId: req.user._id,
+      visitDate: appointment.appointmentDate,
+      chiefComplaint: appointment.reason,
+      symptoms: symptoms || appointment.symptoms || [],
+      vitalSigns: vitalSigns || {},
+      diagnosis,
+      icdCode: icdCode || '',
+      prescription: Array.isArray(prescription) ? prescription : [],
+      notes: doctorNotes || '',
+      followUpDate: followUpDate || null,
+      status: 'completed'
+    });
+
+    res.json({
+      message: 'Hoàn thành khám thành công',
+      data: {
+        _id: appointment._id,
+        status: appointment.status,
+        completedAt: appointment.completedAt,
+        diagnosis: appointment.diagnosis,
+        medicalRecordId: medicalRecord._id
+      }
+    });
+  } catch (error) {
+    console.error('completeExamination error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// 14B. CẬP NHẬT HỒ SƠ KHÁM (sau khi completed - bác sĩ chỉnh sửa)
+export const updateMedicalRecordById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      diagnosis,
+      icdCode,
+      doctorNotes,
+      followUpDate,
+      followUpInstructions,
+      symptoms,
+      prescription,
+      vitalSigns,
+    } = req.body;
+
+    if (!req.user || req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
+
+    if (!diagnosis || !diagnosis.trim()) {
+      return res.status(400).json({ message: 'Chẩn đoán là bắt buộc' });
+    }
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Không tìm thấy lịch hẹn' });
+    }
+
+    if (appointment.doctorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Đây không phải lịch hẹn của bạn' });
+    }
+
+    if (appointment.status !== 'completed') {
+      return res.status(400).json({ message: 'Chỉ được chỉnh sửa hồ sơ đã hoàn thành' });
+    }
+
+    // Cập nhật appointment
+    appointment.diagnosis = diagnosis;
+    appointment.doctorNotes = doctorNotes || '';
+    appointment.followUpDate = followUpDate || null;
+    appointment.followUpInstructions = followUpInstructions || '';
+    appointment.prescription = Array.isArray(prescription)
+      ? prescription.map(p => `${p.medicationName} - ${p.dosage || ''} - ${p.frequency || ''} - ${p.duration || ''}`).join('; ')
+      : (prescription || appointment.prescription || '');
+    await appointment.save();
+
+    // Cập nhật MedicalRecord mới nhất tương ứng
+    try {
+      const medicalRecord = await MedicalRecord.findOne({
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        visitDate: appointment.appointmentDate,
+      }).sort({ createdAt: -1 });
+
+      if (medicalRecord) {
+        medicalRecord.diagnosis = diagnosis;
+        medicalRecord.icdCode = icdCode || medicalRecord.icdCode || '';
+        medicalRecord.notes = doctorNotes || '';
+        medicalRecord.followUpDate = followUpDate || null;
+        medicalRecord.symptoms = symptoms || medicalRecord.symptoms || [];
+        medicalRecord.prescription = Array.isArray(prescription) ? prescription : medicalRecord.prescription;
+        if (vitalSigns) medicalRecord.vitalSigns = vitalSigns;
+        await medicalRecord.save();
+      }
+    } catch (mrErr) {
+      console.warn('MedicalRecord update warning:', mrErr.message);
+    }
+
+    res.json({
+      message: 'Cập nhật hồ sơ khám thành công',
+      data: {
+        _id: appointment._id,
+        diagnosis: appointment.diagnosis,
+        doctorNotes: appointment.doctorNotes,
+        followUpDate: appointment.followUpDate,
+        followUpInstructions: appointment.followUpInstructions,
+        prescription: appointment.prescription,
+      }
+    });
+  } catch (error) {
+    console.error('updateMedicalRecordById error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// 14. CHI TIẾT APPOINTMENT CHO TRANG KHÁM
+export const getExaminationDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const appointment = await Appointment.findById(id)
+      .populate('patientId', 'name phone email dateOfBirth gender')
+      .populate('doctorProfileId', 'specialty consultationFee');
+
+    if (!appointment) {
+      return res.status(404).json({ message: 'Không tìm thấy lịch hẹn' });
+    }
+
+    // Kiểm tra quyền: bác sĩ phụ trách hoặc bệnh nhân
+    const isDoctor = appointment.doctorId.toString() === userId.toString();
+    const isPatient = appointment.patientId?._id?.toString() === userId.toString();
+    if (!isDoctor && !isPatient && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Không có quyền xem' });
+    }
+
+    // Lấy lịch sử khám trước của bệnh nhân này
+    const history = await MedicalRecord.find({
+      patientId: appointment.patientId._id || appointment.patientId,
+      doctorId: appointment.doctorId
+    })
+      .sort({ visitDate: -1 })
+      .limit(5)
+      .select('visitDate diagnosis prescription followUpDate chiefComplaint');
+
+    res.json({ data: appointment, history });
+  } catch (error) {
+    console.error('getExaminationDetail error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 };

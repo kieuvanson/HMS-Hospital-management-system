@@ -202,7 +202,38 @@ export const appointmentAPI = {
   cancelAppointment: async (appointmentId) => {
     const { data } = await api.delete(`/appointment/${appointmentId}`);
     return data.data || data;
-  }
+  },
+
+  // ===== EXAMINATION APIs =====
+  // Lấy danh sách khám hôm nay (confirmed + in_progress + completed)
+  getTodayExaminations: async (params) => {
+    const { data } = await api.get('/appointment/examinations/today', { params });
+    return data; // { data: [...], stats: { waiting, inProgress, completed } }
+  },
+
+  // Bắt đầu khám (confirmed → in_progress)
+  startExamination: async (appointmentId) => {
+    const { data } = await api.put(`/appointment/${appointmentId}/start`);
+    return data;
+  },
+
+  // Hoàn thành khám (in_progress → completed) + tạo MedicalRecord
+  completeExamination: async (appointmentId, payload) => {
+    const { data } = await api.put(`/appointment/${appointmentId}/complete`, payload);
+    return data;
+  },
+
+  // Chi tiết appointment kèm lịch sử khám
+  getExaminationDetail: async (appointmentId) => {
+    const { data } = await api.get(`/appointment/${appointmentId}/detail`);
+    return data; // { data: appointment, history: [...] }
+  },
+
+  // Cập nhật hồ sơ khám bệnh đã hoàn thành
+  updateMedicalRecord: async (appointmentId, payload) => {
+    const { data } = await api.put(`/appointment/${appointmentId}/medical-record`, payload);
+    return data;
+  },
 };
 
 export const prescriptionAPI = {

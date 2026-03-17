@@ -73,6 +73,10 @@ const appointmentSchema = new mongoose.Schema({
   cancelledAt: Date,
   cancelReason: String,
   
+  // ===== THỜI GIAN KHÁM =====
+  startedAt: Date,
+  completedAt: Date,
+  
   // ===== KẾT QUẢ KHÁM (sau khi completed) =====
   diagnosis: String,
   prescription: String,
