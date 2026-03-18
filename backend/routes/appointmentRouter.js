@@ -15,6 +15,7 @@ import {
   completeExamination,
   getExaminationDetail,
   updateMedicalRecordById,
+  getAvailableSlots,
 } from '../controllers/appoinment_controller.js';
 
 const router_appointment = express.Router();
@@ -28,6 +29,7 @@ router_appointment.put('/:id/medical-record', protectedRoute, isDoctorRole, upda
 
 // ===== EXISTING ROUTES =====
 router_appointment.post('/book', protectedRoute, createAppointment);
+router_appointment.get('/available-slots', protectedRoute, getAvailableSlots);
 router_appointment.get('/my-appointments', protectedRoute, isDoctorRole, getDoctorAppointments);
 router_appointment.get('/list', protectedRoute, isPatientRole, getPatientAppointments);
 router_appointment.get('/patient/:patientId', protectedRoute, isDoctorRole, getAppointmentsByPatient);

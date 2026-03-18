@@ -29,7 +29,6 @@ const __dirname = path.dirname(__filename);
 
 // Sử dụng __dirname để trỏ đúng tới backend/uploads
 const uploadsPath = path.join(__dirname, 'uploads');
-console.log('Serving uploads from:', uploadsPath);
 app.use('/uploads', express.static(uploadsPath, {
   dotfiles: 'allow',
   index: false

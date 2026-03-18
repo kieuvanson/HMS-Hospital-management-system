@@ -8,23 +8,29 @@ import { createAccessToken,createrefreshToken,saveRefreshToken } from '../utils/
 export const Sign_up= async(req,res)=>{
     try {
         const {email,password,name}=req.body;
-        if(!email || !password || !name){
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const normalizedName = String(name || '').trim();
+
+        if(!normalizedEmail || !password || !normalizedName){
             return res.status(400).json({message:"Vui lòng điền đầy đủ thông tin"});
         }
-         const duplicateUser = await User.findOne({ email });
+         const duplicateUser = await User.findOne({ email: normalizedEmail });
         if (duplicateUser) {
             return res.status(409).json({ message: "Email đã được sử dụng" });
         }   
         const salt = await bcrypt.genSalt(10);
         const hashpassword = await bcrypt.hash(password,salt);
         await User.create({
-            email,
+            email: normalizedEmail,
             hashpassword,
-            name,
+            name: normalizedName,
         });
         return res.status(201).json({message:"Đăng ký thành công"});
 
     } catch (error) {
+        if (error?.code === 11000 && error?.keyPattern?.email) {
+            return res.status(409).json({ message: "Email đã được sử dụng" });
+        }
         console.error("Lỗi đăng ký người dùng:", error);
         return res.status(500).json({message:"Lỗi máy chủ, vui lòng thử lại sau"});
     }
@@ -129,16 +135,17 @@ export const refreshToken = async (req, res) => {
 export const createDoctorAccount = async (req, res) => {
     try {
         const { name, email, password, age, gender, specialty, department, phone } = req.body;
+        const normalizedEmail = String(email || '').trim().toLowerCase();
 
         // Validation
-        if (!name || !email || !password || !age || !gender || !specialty || !department) {
+        if (!name || !normalizedEmail || !password || !age || !gender || !specialty || !department) {
             return res.status(400).json({ 
                 message: "Vui lòng điền đầy đủ thông tin bắt buộc" 
             });
         }
 
         // Check email exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return res.status(409).json({ 
                 message: "Email đã được sử dụng" 
@@ -168,7 +175,7 @@ export const createDoctorAccount = async (req, res) => {
         // Create user account
         const newUser = await User.create({
             name,
-            email,
+            email: normalizedEmail,
             hashpassword,
             age: parseInt(age),
             gender,
@@ -204,6 +211,9 @@ export const createDoctorAccount = async (req, res) => {
         });
 
     } catch (error) {
+        if (error?.code === 11000 && error?.keyPattern?.email) {
+            return res.status(409).json({ message: "Email đã được sử dụng" });
+        }
         console.error("Lỗi tạo tài khoản bác sĩ:", error);
         return res.status(500).json({
             message: "Lỗi máy chủ, vui lòng thử lại sau",

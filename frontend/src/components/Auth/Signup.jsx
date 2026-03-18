@@ -56,7 +56,7 @@ export default function Signup({ onSwitchToLogin }) {
         <p className="text-gray-500 text-sm">Tạo tài khoản mới để bắt đầu</p>
       </div>
 
-      <div className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Họ và tên
@@ -144,7 +144,6 @@ export default function Signup({ onSwitchToLogin }) {
 
         <button
           type="submit"
-          onClick={handleSubmit}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
           disabled={loading}
         >
@@ -157,7 +156,7 @@ export default function Signup({ onSwitchToLogin }) {
             'Đăng ký'
           )}
         </button>
-      </div>
+      </form>
 
       <div className="mt-6 text-center">
         <p className="text-gray-600 text-sm">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Eye,
   FilePlus,
   XCircle,
+  Stethoscope,
   CalendarDays,
   Clock3,
   History,
@@ -16,6 +18,7 @@ import { doctorAPI, appointmentAPI } from '../../services/api';
 // Component này được render bên trong `DoctorLayout`,
 // vì vậy không cần tự render Sidebar và Header nữa.
 const Patients = () => {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -133,6 +136,18 @@ const Patients = () => {
 
   const handleCancelReception = (id) => {
     alert(`Hủy tiếp nhận bệnh nhân ${id}`);
+  };
+
+  const handleOpenExamination = (appointment) => {
+    if (!appointment?._id) return;
+    setShowModal(false);
+    navigate('/doctor/examinations', {
+      state: {
+        focusAppointmentId: appointment._id,
+        focusPatientId: selectedPatient?._id,
+        focusAppointment: appointment,
+      },
+    });
   };
 
   return (
@@ -498,6 +513,15 @@ const Patients = () => {
                           {appointment.notes && (
                             <p><span className="font-semibold">Ghi chú:</span> {appointment.notes}</p>
                           )}
+                        </div>
+                        <div className="mt-3 ml-7">
+                          <button
+                            onClick={() => handleOpenExamination(appointment)}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                          >
+                            <Stethoscope className="h-4 w-4" />
+                            Khám bệnh án
+                          </button>
                         </div>
                       </div>
                     ))}

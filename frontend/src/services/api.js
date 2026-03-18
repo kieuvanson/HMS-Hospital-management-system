@@ -74,6 +74,10 @@ api.interceptors.response.use(
         isRefreshing = false;
       }
     }
+    const serverMessage = error?.response?.data?.message;
+    if (serverMessage) {
+      error.message = serverMessage;
+    }
     return Promise.reject(error);
   }
 );
@@ -103,10 +107,13 @@ export const userAPI = {
 
 export const authAPI = {
   signUp: async (userData) => {
+    const normalizedEmail = String(userData.email || '').trim().toLowerCase();
+    const normalizedName = String(userData.fullName || '').trim();
+
     const { data } = await api.post('/auth/Sign_up', {
-      email: userData.email,
+      email: normalizedEmail,
       password: userData.password,
-      name: userData.fullName,
+      name: normalizedName,
     });
     return data;
   },
@@ -144,14 +151,14 @@ export const medicalAPI = {
 export const specialtyAPI = {
   getAll: async () => {
     const { data } = await api.get('/specialty');
-    return data;
+    return Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
   }
 };
 
 export const doctorAPI = {
   getBySpecialty: async (specialtyId) => {
     const { data } = await api.get(`/doctor/by-specialty?specialtyId=${specialtyId}`);
-    return data;
+    return Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
   },
 
   // Lấy danh sách bệnh nhân của bác sĩ
@@ -162,6 +169,20 @@ export const doctorAPI = {
 };
 
 export const appointmentAPI = {
+  // API tương thích cho form đặt lịch hiện tại (trả cả message + data)
+  bookAppointment: async (payload) => {
+    const { data } = await api.post('/appointment/book', payload);
+    return data;
+  },
+
+  // Lấy danh sách giờ đã được đặt của bác sĩ theo ngày
+  getByDoctorAndDate: async (doctorProfileId, date) => {
+    const { data } = await api.get('/appointment/available-slots', {
+      params: { doctorProfileId, date },
+    });
+    return data;
+  },
+
   // Lấy lịch hẹn của bác sĩ
   getAppointmentsByDoctor: async (params) => {
     const { data } = await api.get('/appointment/my-appointments', { params });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Search, Stethoscope, Clock, FileText, ChevronRight, ChevronDown,
   AlertCircle, CheckCircle, XCircle, Filter, ClipboardList, RefreshCw,
@@ -1071,6 +1071,8 @@ const MedicalRecordViewPanel = ({ appointment, onClose, onSaved }) => {
 //  Trang Khám bệnh chính
 // ─────────────────────────────────────────
 const Examinations = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   useOutletContext() || {};
   const [examinations, setExaminations] = useState([]);
   const [stats, setStats] = useState({ waiting: 0, inProgress: 0, completed: 0 });
@@ -1082,6 +1084,16 @@ const Examinations = () => {
   const [examPanel, setExamPanel] = useState(null);   // appointment đang mở panel
   const [viewPanel, setViewPanel] = useState(null);   // appointment đang xem hs
   const [actionLoading, setActionLoading] = useState(null);
+  const [pendingFocus, setPendingFocus] = useState(() => ({
+    id: location.state?.focusAppointmentId || null,
+    appointment: location.state?.focusAppointment || null,
+  }));
+
+  const isSameDay = (a, b) => (
+    a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate()
+  );
 
   // ── Fetch data ──
   const fetchData = useCallback(async () => {
@@ -1106,16 +1118,35 @@ const Examinations = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  useEffect(() => {
+    const focusId = location.state?.focusAppointmentId;
+    if (focusId) {
+      setPendingFocus({
+        id: focusId,
+        appointment: location.state?.focusAppointment || null,
+      });
+    }
+  }, [location.state]);
+
   // ── Bắt đầu khám → gọi API rồi mở panel ──
-  const handleStart = async (apt) => {
+  const handleStart = useCallback(async (apt) => {
     setActionLoading(apt._id);
     try {
       await appointmentAPI.startExamination(apt._id);
       // Cập nhật local state
+      let foundInTodayList = false;
       setExaminations(prev =>
-        prev.map(e => e._id === apt._id ? { ...e, status: 'in_progress' } : e)
+        prev.map(e => {
+          if (e._id === apt._id) {
+            foundInTodayList = true;
+            return { ...e, status: 'in_progress' };
+          }
+          return e;
+        })
       );
-      setStats(prev => ({ ...prev, waiting: prev.waiting - 1, inProgress: prev.inProgress + 1 }));
+      if (foundInTodayList) {
+        setStats(prev => ({ ...prev, waiting: Math.max(0, prev.waiting - 1), inProgress: prev.inProgress + 1 }));
+      }
       // Mở panel khám với appointment cập nhật status
       setExamPanel({ ...apt, status: 'in_progress' });
     } catch (err) {
@@ -1123,7 +1154,65 @@ const Examinations = () => {
     } finally {
       setActionLoading(null);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingFocus?.id || loading) return;
+
+    const clearNavigationState = () => {
+      navigate('/doctor/examinations', { replace: true, state: null });
+    };
+
+    const openTarget = async () => {
+      let target = examinations.find((item) => item._id === pendingFocus.id)
+        || pendingFocus.appointment;
+
+      if (!target) {
+        try {
+          target = await appointmentAPI.getAppointmentById(pendingFocus.id);
+        } catch (err) {
+          setError('Không thể tải chi tiết lịch hẹn cần mở.');
+          setPendingFocus({ id: null, appointment: null });
+          clearNavigationState();
+          return;
+        }
+      }
+
+      if (!target) {
+        setError('Không tìm thấy lịch hẹn cần mở.');
+        setPendingFocus({ id: null, appointment: null });
+        clearNavigationState();
+        return;
+      }
+
+      const appointmentDate = target.appointmentDate ? new Date(target.appointmentDate) : null;
+      const notToday = appointmentDate && !isSameDay(appointmentDate, new Date());
+
+      if (notToday) {
+        const ok = window.confirm('Lịch khám này không phải ngày hôm nay. Bạn có muốn tiếp tục khám không?');
+        if (!ok) {
+          setPendingFocus({ id: null, appointment: null });
+          clearNavigationState();
+          return;
+        }
+      }
+
+      setExpandedId(target._id);
+
+      if (target.status === 'confirmed') {
+        await handleStart(target);
+      } else if (target.status === 'in_progress') {
+        setExamPanel(target);
+      } else if (target.status === 'completed') {
+        setViewPanel(target);
+      }
+
+      setPendingFocus({ id: null, appointment: null });
+      clearNavigationState();
+    };
+
+    openTarget();
+  }, [pendingFocus, loading, examinations, handleStart, navigate]);
 
   // ── Mở panel từ row đang in_progress ──
   const handleOpenPanel = (apt) => {

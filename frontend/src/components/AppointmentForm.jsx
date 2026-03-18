@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { appointmentAPI, specialtyAPI, doctorAPI } from '../services/api';
-import axios from 'axios';
 
 const SPECIALTIES = [
     'Nội', 'Ngoại', 'Sản', 'Nhi', 'Tim mạch', 'Da liễu', 'Tai mũi họng', 'Mắt', 'Răng hàm mặt', 'Thần kinh', 'Ung bướu', 'Khác'
@@ -61,18 +61,18 @@ const AppointmentForm = () => {
     const [allDoctors, setAllDoctors] = useState([]);
     const [filteredDoctors, setFilteredDoctors] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState(null);
-    const [message, setMessage] = useState('');
-    const [success, setSuccess] = useState(null);
     const [errors, setErrors] = useState({});
     // Lấy danh sách tỉnh/thành phố mẫu
     const provinces = ['Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ', 'Khác'];
     const [specialties, setSpecialties] = useState([]);
     const [bookedTimeSlots, setBookedTimeSlots] = useState([]);
+    const specialtyOptions = Array.isArray(specialties) ? specialties : [];
+    const doctorOptions = Array.isArray(filteredDoctors) ? filteredDoctors : [];
 
     useEffect(() => {
         // Lấy danh sách chuyên khoa từ API khi mở form
         specialtyAPI.getAll().then(data => {
-            setSpecialties(data);
+            setSpecialties(Array.isArray(data) ? data : []);
         }).catch(() => setSpecialties([]));
         setAllDoctors([]); // Xóa dữ liệu cũ
     }, []);
@@ -81,7 +81,7 @@ const AppointmentForm = () => {
         // Khi chọn chuyên khoa, gọi API lấy bác sĩ theo chuyên khoa
         if (form.specialty) {
             doctorAPI.getBySpecialty(form.specialty).then(data => {
-                setFilteredDoctors(data);
+                setFilteredDoctors(Array.isArray(data) ? data : []);
             }).catch(() => setFilteredDoctors([]));
         } else {
             setFilteredDoctors([]);
@@ -94,20 +94,19 @@ const AppointmentForm = () => {
     // Khi chọn bác sĩ thì set selectedDoctor
     useEffect(() => {
         if (form.doctorProfileId) {
-            const doc = filteredDoctors.find(d => d._id === form.doctorProfileId);
+            const doc = doctorOptions.find(d => d._id === form.doctorProfileId);
             setSelectedDoctor(doc || null);
         } else {
             setSelectedDoctor(null);
         }
-    }, [form.doctorProfileId, filteredDoctors]);
+    }, [form.doctorProfileId, doctorOptions]);
 
     // Lấy lịch hẹn đã đặt của bác sĩ trong ngày
     useEffect(() => {
         if (form.doctorProfileId && form.appointmentDate) {
             appointmentAPI.getByDoctorAndDate(form.doctorProfileId, form.appointmentDate)
                 .then(data => {
-                    // Lấy danh sách khung giờ đã đặt
-                    const booked = data.map(appointment => appointment.appointmentTime);
+                    const booked = Array.isArray(data?.bookedSlots) ? data.bookedSlots : [];
                     setBookedTimeSlots(booked);
                 })
                 .catch(() => setBookedTimeSlots([]));
@@ -139,8 +138,7 @@ const AppointmentForm = () => {
     // Lưu nháp
     const handleSaveDraft = () => {
         localStorage.setItem('appointmentDraft', JSON.stringify(form));
-        setMessage('Đã lưu nháp!');
-        setSuccess(true);
+        toast.info('Đã lưu nháp thành công.', { autoClose: 2500 });
     };
 
     // Gửi form
@@ -149,8 +147,7 @@ const AppointmentForm = () => {
         const err = validate();
         setErrors(err);
         if (Object.keys(err).length > 0) {
-            setMessage('Vui lòng kiểm tra lại các trường bắt buộc.');
-            setSuccess(false);
+            toast.warning('Vui lòng kiểm tra lại các trường bắt buộc.', { autoClose: 3500 });
             return;
         }
         
@@ -165,14 +162,18 @@ const AppointmentForm = () => {
         };
         
         try {
-            await appointmentAPI.bookAppointment(appointmentData);
-            setSuccess(true);
-            setMessage('Đặt lịch thành công! Vui lòng kiểm tra lại thông tin và đến đúng giờ.');
+            const response = await appointmentAPI.bookAppointment(appointmentData);
+            toast.success(
+                response?.message || 'Đặt lịch thành công! Email xác nhận đã được gửi về email đăng nhập của bạn.',
+                { autoClose: 4000 }
+            );
             localStorage.removeItem('appointmentDraft');
             setForm(initialForm);
         } catch (error) {
-            setSuccess(false);
-            setMessage('Đặt lịch không thành công. Vui lòng thử lại hoặc kiểm tra thông tin.');
+            toast.error(
+                error?.response?.data?.message || 'Đặt lịch không thành công. Vui lòng thử lại hoặc kiểm tra thông tin.',
+                { autoClose: 5000 }
+            );
         }
     };
 
@@ -184,11 +185,6 @@ const AppointmentForm = () => {
             <div className={`transition-all duration-300 ease-in-out ${isDoctorSelected ? 'w-[800px] flex-none -translate-x-8' : 'w-[800px] flex-none'}`}>
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow p-12 space-y-8 border border-gray-100">
                     <h2 className="text-2xl font-bold mb-2">Đặt Lịch Khám</h2>
-                    {message && (
-                        <div className={success ? 'text-green-600 font-medium mb-2' : 'text-red-600 font-medium mb-2'}>
-                            {message}
-                        </div>
-                    )}
                     {/* ...các trường form giữ nguyên như trên, chỉ bỏ trường OTP... */}
                     {/* Thông tin bệnh nhân */}
                     <div>
@@ -276,15 +272,15 @@ const AppointmentForm = () => {
                                 <label className="font-medium">Chuyên khoa <span className="text-red-500">*</span></label>
                                 <select name="specialty" value={form.specialty} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500">
                                     <option value="">Chọn</option>
-                                    {specialties.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                                    {specialtyOptions.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                                 </select>
                                 {errors.specialty && <div className="text-xs text-red-500">{errors.specialty}</div>}
                             </div>
                             <div>
                                 <label className="font-medium">Bác sĩ</label>
-                                <select name="doctorProfileId" value={form.doctorProfileId} onChange={handleChange} disabled={!form.specialty || filteredDoctors.length === 0} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
-                                    <option value="">{form.specialty ? (filteredDoctors.length ? 'Chọn bác sĩ' : 'Không có bác sĩ') : 'Chọn chuyên khoa trước'}</option>
-                                    {filteredDoctors.map((doctor) => (
+                                <select name="doctorProfileId" value={form.doctorProfileId} onChange={handleChange} disabled={!form.specialty || doctorOptions.length === 0} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
+                                    <option value="">{form.specialty ? (doctorOptions.length ? 'Chọn bác sĩ' : 'Không có bác sĩ') : 'Chọn chuyên khoa trước'}</option>
+                                    {doctorOptions.map((doctor) => (
                                         <option key={doctor._id} value={doctor._id}>
                                             {doctor.userId?.name || doctor.name} {doctor.degree ? `(${doctor.degree})` : ''}
                                         </option>

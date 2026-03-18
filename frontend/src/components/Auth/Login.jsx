@@ -83,7 +83,7 @@ export default function Login({ onSwitchToSignup }) {
         <p className="text-gray-500 text-sm">Truy cập vào hệ thống EMR của bạn</p>
       </div>
 
-      <div className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Email
@@ -145,7 +145,6 @@ export default function Login({ onSwitchToSignup }) {
 
         <button
           type="submit"
-          onClick={handleSubmit}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
           disabled={loading}
         >
@@ -158,7 +157,7 @@ export default function Login({ onSwitchToSignup }) {
             'Đăng nhập'
           )}
         </button>
-      </div>
+      </form>
 
       <div className="mt-6 text-center">
         <p className="text-gray-600 text-sm">
