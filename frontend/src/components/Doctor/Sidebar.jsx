@@ -8,7 +8,10 @@ import {
   Settings, 
   Stethoscope,
   LogOut,
-  Heart
+  Heart,
+  ClipboardCheck,
+  Wallet,
+  FileText
 } from 'lucide-react';
 
 const BACKEND_URL = 'http://localhost:5000';
@@ -53,7 +56,7 @@ const Sidebar = ({ doctor, loading }) => {
     };
   }, []);
   
-  const navItems = [
+  const workNavItems = [
     { 
       name: 'Tổng quan', 
       icon: <LayoutDashboard className="h-5 w-5" />, 
@@ -86,6 +89,44 @@ const Sidebar = ({ doctor, loading }) => {
     },
   ];
 
+  const personalNavItems = [
+    {
+      name: 'Đăng ký lịch làm việc',
+      icon: <ClipboardCheck className="h-5 w-5" />,
+      path: '/doctor/work-schedule-registration'
+    },
+    {
+      name: 'Theo dõi mức lương',
+      icon: <Wallet className="h-5 w-5" />,
+      path: '/doctor/salary-tracking'
+    },
+    {
+      name: 'Thủ tục hành chính',
+      icon: <FileText className="h-5 w-5" />,
+      path: '/doctor/administrative-procedures'
+    }
+  ];
+
+  const renderNavSection = (title, items) => (
+    <div className="space-y-2">
+      <p className="px-4 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{title}</p>
+      {items.map((item) => (
+        <Link
+          key={item.path}
+          to={item.path}
+          className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+            location.pathname === item.path
+              ? 'bg-[#334155] text-[#3B82F6]'
+              : 'hover:bg-[#334155] hover:text-[#F1F5F9]'
+          }`}
+        >
+          <span className="mr-3">{item.icon}</span>
+          {item.name}
+        </Link>
+      ))}
+    </div>
+  );
+
   return (
     <div className="hidden md:flex md:flex-shrink-0">
       <div className="flex flex-col w-64 bg-[#1E293B] text-[#F1F5F9]">
@@ -103,21 +144,9 @@ const Sidebar = ({ doctor, loading }) => {
         </div>
 
         {/* Menu điều hướng */}
-        <nav className="flex-1 px-3 py-4 space-y-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                location.pathname === item.path
-                  ? 'bg-[#334155] text-[#3B82F6]'
-                  : 'hover:bg-[#334155] hover:text-[#F1F5F9]'
-              }`}
-            >
-              <span className="mr-3">{item.icon}</span>
-              {item.name}
-            </Link>
-          ))}
+        <nav className="flex-1 px-3 py-4 space-y-5">
+          {renderNavSection('Công việc', workNavItems)}
+          {renderNavSection('Cá nhân', personalNavItems)}
         </nav>
 
         {/* Footer */}

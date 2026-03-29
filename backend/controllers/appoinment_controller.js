@@ -5,6 +5,87 @@ import User from '../models/User_Model.js';
 import MedicalRecord from '../models/medical_record.js';
 import { sendAppointmentConfirmation, sendAppointmentReminder } from '../services/emailService.js';
 
+const DEFAULT_TIME_SLOTS = [
+  { startTime: '08:00', endTime: '12:00' },
+  { startTime: '13:00', endTime: '17:00' }
+];
+
+const DEFAULT_WORKING_SCHEDULE = [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+  dayOfWeek,
+  timeSlots: DEFAULT_TIME_SLOTS
+}));
+
+const getDayOfWeekMondayBased = (date) => {
+  const jsDay = date.getDay();
+  return jsDay === 0 ? 7 : jsDay;
+};
+
+const toDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getWorkingSchedule = (doctorProfile) => {
+  if (Array.isArray(doctorProfile?.workingSchedule) && doctorProfile.workingSchedule.length > 0) {
+    return doctorProfile.workingSchedule;
+  }
+  return DEFAULT_WORKING_SCHEDULE;
+};
+
+const getDailyRule = (doctorProfile, date) => {
+  const dayOfWeek = getDayOfWeekMondayBased(date);
+  return getWorkingSchedule(doctorProfile).find((rule) => Number(rule.dayOfWeek) === dayOfWeek);
+};
+
+const isDoctorOnPaidMonthlyLeave = (doctorProfile, date) => {
+  const targetDateKey = toDateKey(date);
+  const leaves = Array.isArray(doctorProfile?.leaves) ? doctorProfile.leaves : [];
+
+  return leaves.some((leave) => {
+    if (leave.leaveType !== 'paid_monthly_off') {
+      return false;
+    }
+    return toDateKey(new Date(leave.startDate)) === targetDateKey;
+  });
+};
+
+const generateSlotsFromTimeRange = (startTime, endTime, slotDuration) => {
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  const startTotalMinutes = startHour * 60 + startMinute;
+  const endTotalMinutes = endHour * 60 + endMinute;
+
+  const slots = [];
+  for (let totalMinutes = startTotalMinutes; totalMinutes + slotDuration <= endTotalMinutes; totalMinutes += slotDuration) {
+    const hour = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+    const minute = String(totalMinutes % 60).padStart(2, '0');
+    slots.push(`${hour}:${minute}`);
+  }
+
+  return slots;
+};
+
+const buildSlotsFromRule = (dailyRule, slotDuration = 30) => {
+  if (!dailyRule || !Array.isArray(dailyRule.timeSlots)) {
+    return [];
+  }
+
+  const uniqueSlots = new Set();
+
+  dailyRule.timeSlots.forEach((slot) => {
+    if (!slot?.startTime || !slot?.endTime) {
+      return;
+    }
+
+    const expanded = generateSlotsFromTimeRange(slot.startTime, slot.endTime, slotDuration);
+    expanded.forEach((item) => uniqueSlots.add(item));
+  });
+
+  return Array.from(uniqueSlots).sort();
+};
+
 // 1. TẠO LỊCH HẸN MỚI
 export const createAppointment = async (req, res) => {
   try {
@@ -40,6 +121,27 @@ export const createAppointment = async (req, res) => {
     
     if (!doctorProfile) {
       return res.status(404).json({ message: 'Không tìm thấy bác sĩ' });
+    }
+
+    const dateOnly = new Date(`${appointmentDate}T00:00:00`);
+    if (isDoctorOnPaidMonthlyLeave(doctorProfile, dateOnly)) {
+      return res.status(400).json({
+        message: 'Bác sĩ đã đăng ký nghỉ trong ngày này'
+      });
+    }
+
+    const dailyRule = getDailyRule(doctorProfile, dateOnly);
+    if (!dailyRule) {
+      return res.status(400).json({
+        message: 'Bác sĩ không làm việc trong ngày này'
+      });
+    }
+
+    const availableWorkingSlots = buildSlotsFromRule(dailyRule, doctorProfile.slotDuration || 30);
+    if (!availableWorkingSlots.includes(appointmentTime)) {
+      return res.status(400).json({
+        message: 'Khung giờ đã chọn nằm ngoài lịch làm việc của bác sĩ'
+      });
     }
 
     // Kiểm tra slot còn trống
@@ -422,21 +524,41 @@ export const getAvailableSlots = async (req, res) => {
       });
     }
 
+    const targetDate = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(targetDate.getTime())) {
+      return res.status(400).json({ message: 'Ngày không hợp lệ' });
+    }
+
+    if (isDoctorOnPaidMonthlyLeave(doctorProfile, targetDate)) {
+      return res.json({
+        date,
+        availableSlots: [],
+        bookedSlots: [],
+        message: 'Bác sĩ nghỉ trong ngày này'
+      });
+    }
+
+    const dailyRule = getDailyRule(doctorProfile, targetDate);
+    if (!dailyRule) {
+      return res.json({
+        date,
+        availableSlots: [],
+        bookedSlots: [],
+        message: 'Bác sĩ không làm việc trong ngày này'
+      });
+    }
+
     // Lấy tất cả appointment đã đặt trong ngày (query theo doctorId)
     const bookedAppointments = await Appointment.find({
       doctorId: doctorProfile.userId,
-      appointmentDate: new Date(date),
+      appointmentDate: targetDate,
       status: { $in: ['pending', 'confirmed', 'in_progress'] }
     }).select('appointmentTime');
 
     const bookedTimes = bookedAppointments.map(apt => apt.appointmentTime);
 
-    // Tạo danh sách slot từ 8h-17h (mỗi slot 30 phút)
-    const allSlots = [];
-    for (let hour = 8; hour < 17; hour++) {
-      allSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-      allSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
+    // Tạo slot theo lịch làm việc thật của bác sĩ
+    const allSlots = buildSlotsFromRule(dailyRule, doctorProfile.slotDuration || 30);
 
     const availableSlots = allSlots.filter(slot => !bookedTimes.includes(slot));
 

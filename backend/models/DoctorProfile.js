@@ -98,11 +98,53 @@ const doctorProfileSchema = new mongoose.Schema({
       required: true
     },
     reason: String,
+    leaveType: {
+      type: String,
+      enum: ['paid_monthly_off', 'unpaid', 'sick', 'other'],
+      default: 'other'
+    },
+    salaryDeduction: {
+      type: Boolean,
+      default: true
+    },
     isApproved: {
       type: Boolean,
       default: true
     }
   }],
+
+  // ===== LƯƠNG =====
+  salaryAccount: {
+    bankName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    accountNumber: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    accountHolder: {
+      type: String,
+      trim: true,
+      default: ''
+    }
+  },
+
+  salaryConfig: {
+    baseMonthlySalary: {
+      type: Number,
+      default: 15000000,
+      min: 0
+    },
+    appointmentCommissionRate: {
+      type: Number,
+      default: 0.2,
+      min: 0,
+      max: 1
+    }
+  },
   
   // ===== ĐÁNH GIÁ =====
   rating: {

@@ -63,6 +63,10 @@ const medicalRecordSchema = new mongoose.Schema({
   
   // Đơn thuốc
   prescription: [{
+    medicationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Medication'
+    },
     medicationName: {
       type: String,
       required: true
@@ -71,6 +75,27 @@ const medicalRecordSchema = new mongoose.Schema({
     frequency: String,
     duration: String,
     instructions: String
+    ,
+    unitType: {
+      type: String,
+      enum: ['dose', 'box', 'tablet', 'capsule', 'ml', 'tube', 'vial', 'other'],
+      default: 'dose'
+    },
+    quantity: {
+      type: Number,
+      min: 1,
+      default: 1
+    },
+    unitPrice: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    totalPrice: {
+      type: Number,
+      min: 0,
+      default: 0
+    }
   }],
   
   // Ghi chú của bác sĩ

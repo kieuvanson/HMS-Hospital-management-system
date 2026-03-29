@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "seed:medications": "node scripts/seedMedications.js",
+    "seed:medications:large": "node scripts/seedMedications.js 1500",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",

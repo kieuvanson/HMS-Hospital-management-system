@@ -165,6 +165,81 @@ export const doctorAPI = {
   getPatients: async (params) => {
     const { data } = await api.get('/doctor/patients', { params });
     return Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+  },
+
+  getWorkSchedule: async () => {
+    const { data } = await api.get('/doctor/work-schedule');
+    return data;
+  },
+
+  updateWorkSchedule: async (payload) => {
+    const { data } = await api.put('/doctor/work-schedule', payload);
+    return data;
+  },
+
+  getMonthlyLeaves: async (month) => {
+    const { data } = await api.get('/doctor/monthly-leaves', {
+      params: { month }
+    });
+    return data;
+  },
+
+  registerMonthlyLeave: async (payload) => {
+    const { data } = await api.post('/doctor/monthly-leaves', payload);
+    return data;
+  },
+
+  deleteMonthlyLeave: async (leaveId) => {
+    const { data } = await api.delete(`/doctor/monthly-leaves/${leaveId}`);
+    return data;
+  },
+
+  getWorkCalendar: async (month) => {
+    const { data } = await api.get('/doctor/work-calendar', {
+      params: { month }
+    });
+    return data;
+  },
+
+  getSalaryOverview: async (month) => {
+    const { data } = await api.get('/doctor/salary-overview', {
+      params: { month }
+    });
+    return data;
+  },
+
+  getYearlySalaryOverview: async (year) => {
+    const { data } = await api.get('/doctor/salary-overview-yearly', {
+      params: { year }
+    });
+    return data;
+  },
+
+  updateSalaryAccount: async (payload) => {
+    const { data } = await api.put('/doctor/salary-account', payload);
+    return data;
+  },
+
+  getAdministrativeTemplates: async () => {
+    const { data } = await api.get('/doctor/administrative-templates');
+    return data;
+  },
+
+  getAdministrativeRequests: async (status = 'all') => {
+    const { data } = await api.get('/doctor/administrative-requests', {
+      params: { status }
+    });
+    return data;
+  },
+
+  createAdministrativeRequest: async (payload) => {
+    const { data } = await api.post('/doctor/administrative-requests', payload);
+    return data;
+  },
+
+  updateAdministrativeRequest: async (requestId, payload) => {
+    const { data } = await api.put(`/doctor/administrative-requests/${requestId}`, payload);
+    return data;
   }
 };
 

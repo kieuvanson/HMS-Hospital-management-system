@@ -10,6 +10,9 @@ import DoctorProfile from './pages/doctor/DoctorProfile';
 import Patients from './pages/doctor/Patients';
 import DoctorAppointments from './pages/doctor/Appointments';
 import DoctorExaminations from './pages/doctor/Examinations';
+import WorkScheduleRegistration from './pages/doctor/WorkScheduleRegistration';
+import SalaryTracking from './pages/doctor/SalaryTracking';
+import AdministrativeProcedures from './pages/doctor/AdministrativeProcedures';
 import PatientLayout from './components/Patient/PatientLayout';
 import PatientHome from './pages/patient/Home';
 import Profile from './pages/patient/Profile';
@@ -73,6 +76,9 @@ function App() {
             <Route path="patients/new" element={<NewPatientRecord />} />
             <Route path="profile" element={<DoctorProfile />} />
             <Route path="examinations" element={<DoctorExaminations />} />
+            <Route path="work-schedule-registration" element={<WorkScheduleRegistration />} />
+            <Route path="salary-tracking" element={<SalaryTracking />} />
+            <Route path="administrative-procedures" element={<AdministrativeProcedures />} />
           </Route>
 
           {/* Patient Routes */}
