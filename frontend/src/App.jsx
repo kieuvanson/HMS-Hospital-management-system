@@ -26,6 +26,8 @@ import Telemedicine from './pages/patient/Telemedicine';
 import Reviews from './pages/patient/Reviews';
 import Articles from './pages/patient/Articles';
 import Examinations from './pages/patient/Examinations';
+import PatientSpecialties from './pages/patient/Specialties';
+import PatientGuide from './pages/patient/PatientGuide';
 import { userAPI } from './services/api';
 import adminRoutes from './routes/adminRoutes';
 
@@ -96,6 +98,8 @@ function App() {
             <Route path="reviews" element={<Reviews />} />
             <Route path="articles" element={<Articles />} />
             <Route path="examinations" element={<Examinations />} />
+            <Route path="specialties" element={<PatientSpecialties />} />
+            <Route path="guide" element={<PatientGuide />} />
           </Route>
           {/* Admin Routes */}
           {adminRoutes.map(route => (

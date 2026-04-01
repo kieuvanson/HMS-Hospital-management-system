@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const ServiceTabs = () => {
@@ -19,17 +19,17 @@ const ServiceTabs = () => {
   const isActive = (link) => location.pathname === link;
 
   return (
-    <nav className="sticky top-[95px] z-30 bg-gray-100 border-b border-gray-300\">
+    <nav className="sticky top-[116px] z-30 bg-white/95 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <div className="flex overflow-x-auto">
+        <div className="flex overflow-x-auto gap-1 py-1">
           {services.map((service) => (
             <Link
               key={service.id}
               to={service.link}
-              className={`px-6 py-4 text-center whitespace-nowrap font-medium transition-colors ${
+              className={`px-4 py-3 text-center whitespace-nowrap text-sm font-medium rounded-lg transition-colors ${
                 isActive(service.link)
-                  ? 'text-blue-600 border-b-4 border-blue-600'
-                  : 'text-gray-700 hover:text-gray-900'
+                  ? 'text-sky-700 bg-sky-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               {service.title}
