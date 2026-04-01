@@ -573,7 +573,6 @@ const AdminDoctors = () => {
                               </option>
                             ));
                         })()}
-                          ))}
                       </select>
                       {errors.specialty && <p className="text-red-600 text-xs mt-1">{errors.specialty}</p>}
                     </div>
