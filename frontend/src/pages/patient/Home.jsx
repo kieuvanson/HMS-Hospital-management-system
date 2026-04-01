@@ -5,6 +5,7 @@ import banner3 from '../../assets/img/system/baner3.png';
 import banner4 from '../../assets/img/system/baner4.png';
 import banner5 from '../../assets/img/system/baner5.png';
 import { Link, useNavigate } from 'react-router-dom';
+import { getHealthArticles } from '../../services/healthArticles';
 import {
   CalendarCheck,
   FileText,
@@ -28,6 +29,8 @@ const PatientHome = () => {
   const navigate = useNavigate();
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [healthArticles, setHealthArticles] = useState([]);
+  const [articlesLoading, setArticlesLoading] = useState(true);
 
   // Banner data
   const banners = [
@@ -54,6 +57,24 @@ const PatientHome = () => {
   useEffect(() => {
     const timer = setInterval(() => setCurrentBanner(i => (i + 1) % banners.length), 5000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadArticles = async () => {
+      const articles = await getHealthArticles(3);
+      if (isActive) {
+        setHealthArticles(articles);
+        setArticlesLoading(false);
+      }
+    };
+
+    loadArticles();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const banner = banners[currentBanner];
@@ -372,13 +393,31 @@ const PatientHome = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { category: 'Sức khỏe phụ nữ', title: 'Khám sức khỏe định kỳ giúp phát hiện bệnh sớm', author: 'BS. Nguyễn Văn A', date: '10 Jan 2024' },
-              { category: 'Dinh dưỡng', title: 'Thực đơn lành mạnh cho gia đình bận rộn', author: 'BS. Trần Thị B', date: '8 Jan 2024' },
-              { category: 'Tim mạch', title: '5 thói quen tốt cho người tăng huyết áp', author: 'BS. Lê Văn C', date: '6 Jan 2024' },
-            ].map((article, idx) => (
-              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                <div className="h-40 bg-gradient-to-r from-blue-500 to-blue-600" />
+            {articlesLoading && [0, 1, 2].map((item) => (
+              <div key={item} className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse">
+                <div className="h-40 bg-gray-200" />
+                <div className="p-6 space-y-3">
+                  <div className="h-6 w-24 rounded-full bg-gray-200" />
+                  <div className="h-5 w-full rounded bg-gray-200" />
+                  <div className="h-5 w-5/6 rounded bg-gray-200" />
+                  <div className="h-4 w-2/3 rounded bg-gray-200 pt-3 border-t border-gray-100" />
+                </div>
+              </div>
+            ))}
+
+            {!articlesLoading && healthArticles.map((article) => (
+              <a
+                key={article.id}
+                href={article.url}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow block"
+              >
+                {article.image ? (
+                  <img src={article.image} alt={article.title} className="h-40 w-full object-cover" />
+                ) : (
+                  <div className="h-40 bg-gradient-to-r from-blue-500 to-blue-600" />
+                )}
                 <div className="p-6">
                   <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 mb-3">
                     <span className="text-xs font-semibold text-blue-700">{article.category}</span>
@@ -389,7 +428,7 @@ const PatientHome = () => {
                     <span>{article.date}</span>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>

@@ -192,7 +192,7 @@ const WorkScheduleRegistration = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h1 className="text-2xl font-bold text-gray-900">Đăng ký lịch làm việc</h1>
         <p className="mt-2 text-gray-600">
