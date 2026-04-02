@@ -15,6 +15,7 @@ export default function Login({ onSwitchToSignup }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
     setLoading(true);
 
@@ -23,45 +24,38 @@ export default function Login({ onSwitchToSignup }) {
         email: formData.email,
         password: formData.password
       });
+
+      const accessToken = response?.accessToken || response?.token;
+      if (!accessToken || typeof accessToken !== 'string') {
+        throw new Error('Token không hợp lệ hoặc không tồn tại');
+      }
       
       // Lưu token vào localStorage (giữ cả key cũ để tương thích)
-      const tokenToStore = response?.accessToken || response?.token;
-      if (tokenToStore) {
-        localStorage.setItem('accessToken', tokenToStore);
-        localStorage.setItem('token', tokenToStore);
-      }
-      
-      try {
-        // Kiểm tra định dạng token
-        if (typeof response.accessToken !== 'string' || !response.accessToken) {
-          throw new Error('Token không hợp lệ hoặc không tồn tại');
-        }
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('token', accessToken);
 
-        // Giải mã token để lấy thông tin người dùng
-        const decodedToken = jwtDecode(response.accessToken);
-        
-        // Lưu thông tin người dùng vào localStorage (gọi API để lấy avatarUrl)
-        const userInfo = await userAPI.getProfile();
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        
-        toast.success('Đăng nhập thành công!');
-        
-        // Chuyển hướng dựa trên vai trò
-        if (decodedToken.role === 'admin' || decodedToken.role === 'Admin') {
-          window.location.href = '/admin/dashboard';
-        } else if (decodedToken.role === 'doctor') {
-          window.location.href = '/doctor/dashboard';
-        } else if (decodedToken.role === 'patients') {
-          window.location.href = '/patient/home';
-        } else {
-          window.location.href = '/';
-        }
-      } catch (decodeError) {
-        console.error('Lỗi giải mã token:', decodeError);
-        toast.error('Có lỗi xảy ra khi xử lý đăng nhập');
-        setLoading(false);
+      // Giải mã token để lấy thông tin vai trò
+      const decodedToken = jwtDecode(accessToken);
+
+      // Lưu thông tin người dùng vào localStorage (gọi API để lấy avatarUrl)
+      const userInfo = await userAPI.getProfile();
+      localStorage.setItem('user', JSON.stringify(userInfo));
+
+      toast.success('Đăng nhập thành công!');
+
+      // Chuyển hướng dựa trên vai trò
+      if (decodedToken.role === 'admin' || decodedToken.role === 'Admin') {
+        window.location.href = '/admin/dashboard';
+      } else if (decodedToken.role === 'doctor') {
+        window.location.href = '/doctor/dashboard';
+      } else if (decodedToken.role === 'patients') {
+        window.location.href = '/patient/home';
+      } else {
+        window.location.href = '/';
       }
     } catch (error) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('token');
       setError(error.message || 'Đã có lỗi xảy ra');
       toast.error(error.message || 'Đăng nhập thất bại');
     } finally {

@@ -38,6 +38,11 @@ function App() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
+        const isAuthRoute = window.location.pathname.startsWith('/auth');
+        if (isAuthRoute) {
+          return;
+        }
+
         const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
         if (token) {
           const userData = await userAPI.getProfile();
