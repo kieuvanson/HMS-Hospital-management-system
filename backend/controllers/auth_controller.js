@@ -4,7 +4,7 @@ import DoctorProfile from '../models/DoctorProfile.js';
 import Specialty from '../models/Specialty.js';
 import Department from '../models/Department.js';
 import Session from '../models/Session.js';
-import { createAccessToken,createrefreshToken,saveRefreshToken } from '../utils/jwt.js';
+import { createAccessToken,createrefreshToken,saveRefreshToken, getRefreshCookieClearOptions } from '../utils/jwt.js';
 export const Sign_up= async(req,res)=>{
     try {
         const {email,password,name}=req.body;
@@ -81,7 +81,7 @@ export const Sign_out= async(req,res)=>{
         // Xóa refresh token khỏi cơ sở dữ liệu
         await Session.deleteOne({ refreshToken: refreshToken });
         // Xóa cookie trên trình duyệt
-        res.clearCookie('refreshToken');
+        res.clearCookie('refreshToken', getRefreshCookieClearOptions());
         return res.status(204);
     } catch (error) {
          console.error("Lỗi khi logout:", error);
@@ -108,7 +108,7 @@ export const refreshToken = async (req, res) => {
         // Kiểm tra xem refresh token có hết hạn chưa
         if (new Date() > session.expiresAt) {
             await Session.deleteOne({ refreshToken: refreshTokenFromCookie });
-            res.clearCookie('refreshToken');
+            res.clearCookie('refreshToken', getRefreshCookieClearOptions());
             return res.status(401).json({ message: "Refresh token đã hết hạn, vui lòng đăng nhập lại" });
         }
 

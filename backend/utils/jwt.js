@@ -3,15 +3,41 @@ import crypto from 'crypto';
 import Session from '../models/Session.js';
 const ACCESS_TOKEN_TTL= '7d';
 const refreshTokenTTL= 30*24*60*60*1000; 
+const isProduction = process.env.NODE_ENV === 'production';
+const JWT_SECRET = (
+  process.env.ACCESS_TOKEN_SECRET ||
+  process.env.JWT_SECRET ||
+  ''
+).trim();
+
+export const getRefreshCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  // Cross-site cookie required when frontend and backend are on different domains
+  sameSite: isProduction ? 'none' : 'lax',
+  maxAge: refreshTokenTTL,
+});
+
+export const getRefreshCookieClearOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+});
+
 export const createAccessToken=(user) =>
-           jwt.sign(
-        {
-            id: user._id,     
-            role: user.role
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: ACCESS_TOKEN_TTL }
-    );
+       (() => {
+    if (!JWT_SECRET) {
+      throw new Error('Missing JWT secret. Set ACCESS_TOKEN_SECRET (or JWT_SECRET) in environment variables.');
+    }
+    return jwt.sign(
+    {
+      id: user._id,     
+      role: user.role
+    },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL }
+  );
+  })();
 export const createrefreshToken=() => crypto.randomBytes(40).toString('hex');
 
 export const saveRefreshToken = async (user, refreshToken, res) => {
@@ -22,12 +48,7 @@ export const saveRefreshToken = async (user, refreshToken, res) => {
             expiresAt: new Date(Date.now() + refreshTokenTTL),
   });
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: refreshTokenTTL,
-  });
+  res.cookie('refreshToken', refreshToken, getRefreshCookieOptions());
 };
 
 
