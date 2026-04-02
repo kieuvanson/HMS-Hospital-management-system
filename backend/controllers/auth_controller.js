@@ -39,10 +39,11 @@ export const Sign_up= async(req,res)=>{
 export const Sign_in= async(req,res)=>{
     try {
         const {email,password}=req.body;
-        if(!email || !password){
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        if(!normalizedEmail || !password){
             return res.status(400).json({message:"Vui lòng điền đầy đủ thông tin"});
         }
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
         }

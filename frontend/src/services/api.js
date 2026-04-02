@@ -50,7 +50,12 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    const requestUrl = String(originalRequest?.url || '');
+    const isAuthEndpoint = requestUrl.includes('/auth/Sign_in')
+      || requestUrl.includes('/auth/Sign_up')
+      || requestUrl.includes('/auth/refresh_token');
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -129,7 +134,7 @@ export const authAPI = {
 
   signIn: async (credentials) => {
     const { data } = await api.post('/auth/Sign_in', {
-      email: credentials.email,
+      email: String(credentials.email || '').trim().toLowerCase(),
       password: credentials.password,
     });
     return data;
