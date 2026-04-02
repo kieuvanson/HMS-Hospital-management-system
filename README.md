@@ -5,6 +5,7 @@ He thong quan ly benh vien voi kien truc monorepo gom backend Node.js/Express/Mo
 ## Tong quan
 
 Du an ho tro 3 nhom nguoi dung chinh:
+
 - Patient: dat lich kham, xem thong tin ca nhan, theo doi cac trang nghiep vu.
 - Doctor: quan ly lich hen, kham benh, cap nhat ho so va lich lam viec.
 - Admin: dashboard quan tri, quan ly bac si va cac trang van hanh.
@@ -12,12 +13,14 @@ Du an ho tro 3 nhom nguoi dung chinh:
 ## Chuc nang da co
 
 ### 1. Xac thuc va phien dang nhap
+
 - Dang ky tai khoan patient (`POST /api/auth/Sign_up`).
 - Dang nhap, dang xuat (`POST /api/auth/Sign_in`, `POST /api/auth/Sign_out`).
 - Refresh access token bang cookie refresh token (`POST /api/auth/refresh_token`).
 - Hash mat khau voi bcrypt, JWT access token va luu refresh token theo session.
 
 ### 2. Quan ly nguoi dung va ho so ca nhan
+
 - Lay thong tin profile nguoi dung dang nhap (`GET /api/user/profile`).
 - Cap nhat profile + upload avatar (`PUT /api/user/profile`).
 - Tu dong tach thu muc avatar theo role:
@@ -26,6 +29,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
 - Backend expose static file avatar qua `GET /uploads/...`.
 
 ### 3. Quan ly bac si
+
 - Admin tao tai khoan bac si (`POST /api/auth/admin/create-doctor`).
 - Lay danh sach bac si, loc theo khoa/chuyen khoa:
   - `GET /api/doctor/all`
@@ -40,6 +44,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
 - Bac si xem danh sach benh nhan cua minh (`GET /api/doctor/patients`).
 
 ### 4. Quan ly lich lam viec, nghi phep va luong bac si
+
 - Lich lam viec:
   - `GET /api/doctor/work-schedule`
   - `PUT /api/doctor/work-schedule`
@@ -54,6 +59,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
   - `PUT /api/doctor/salary-account`
 
 ### 5. Thu tuc hanh chinh cho bac si
+
 - Lay danh sach template don tu dong (`GET /api/doctor/administrative-templates`).
 - Tao don, luu nhap, nop duyet va cap nhat don:
   - `GET /api/doctor/administrative-requests`
@@ -62,6 +68,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
 - Da co nhieu mau don noi bo (nghi phep, doi lich, de nghi thiet bi, cong tac, dao tao, ...).
 
 ### 6. Quan ly lich hen va quy trinh kham
+
 - Patient dat lich kham (`POST /api/appointment/book`).
 - Kiem tra slot trong theo ngay/bac si (`GET /api/appointment/available-slots`).
 - Lay danh sach lich hen:
@@ -80,6 +87,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
   - `PUT /api/appointment/:id/medical-record`
 
 ### 7. Ho so y te
+
 - Tao ho so y te (`POST /api/medical/records`) - role doctor.
 - Xem danh sach ho so theo role (`GET /api/medical/records`) - filter tu dong theo middleware.
 - Benh nhan xem ho so cua minh (`GET /api/medical/records/patient`).
@@ -88,16 +96,19 @@ Du an ho tro 3 nhom nguoi dung chinh:
   - `DELETE /api/medical/records/:recordId`
 
 ### 8. Khoa va chuyen khoa
+
 - CRUD khoa phong (`/api/department`).
 - Lay danh sach chuyen khoa cong khai (`GET /api/specialty`).
 
 ### 9. Email
+
 - Gui email xac nhan lich hen sau khi dat thanh cong.
 - Co ham gui nhac lich hen trong `backend/services/emailService.js`.
 
 ## Frontend hien co
 
 ### Patient
+
 - Auth (dang nhap, dang ky).
 - Trang home benh nhan (banner, article suc khoe, CTA dat lich).
 - Dat lich kham voi form day du thong tin va lay slot trong.
@@ -105,6 +116,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
 - Co san cac trang: visits, results, prescriptions, payments, notifications, telemedicine, reviews, articles, examinations.
 
 ### Doctor
+
 - Dashboard bac si.
 - Quan ly lich hen (table + lich tuan + loc trang thai).
 - Danh sach benh nhan va xem lich su lich hen theo benh nhan.
@@ -115,6 +127,7 @@ Du an ho tro 3 nhom nguoi dung chinh:
 - Thu tuc hanh chinh (tao/luu nhap/nop don).
 
 ### Admin
+
 - Admin dashboard (UI thong ke tong quan).
 - Quan ly bac si (tao tai khoan bac si va xem danh sach).
 - Co route cho Admin Nurses, Admin Expenses, User Management (mot so trang dang o muc phat trien giao dien/noi dung mau).
@@ -122,10 +135,12 @@ Du an ho tro 3 nhom nguoi dung chinh:
 ## Cong nghe su dung
 
 ### Backend
+
 - Node.js, Express, MongoDB, Mongoose
 - JWT, bcrypt, cookie-parser, cors, multer, nodemailer
 
 ### Frontend
+
 - React, React Router, Vite, TailwindCSS
 - Axios, React Toastify, Lucide React, ApexCharts
 
@@ -189,12 +204,14 @@ Frontend mac dinh: `http://localhost:5173`
 ## Scripts huu ich
 
 ### Backend
+
 - `npm run dev`: chay backend voi nodemon.
 - `npm start`: chay backend production.
 - `npm run seed:medications`: seed danh sach thuoc.
 - `npm run seed:medications:large`: seed danh sach thuoc so luong lon.
 
 ### Frontend
+
 - `npm run dev`: chay local.
 - `npm run build`: build production.
 - `npm run preview`: preview ban build.
@@ -234,6 +251,7 @@ FRONTEND_URL_REGEX=^https:\/\/.*\.vercel\.app$
 ```
 
 Giai thich:
+
 - `FRONTEND_URL`: danh sach origin cho phep (tach boi dau phay).
 - `FRONTEND_URL_REGEX`: regex cho phep preview domain tren Vercel (neu ban dung preview deployments).
 
