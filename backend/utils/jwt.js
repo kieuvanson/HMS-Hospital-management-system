@@ -53,5 +53,8 @@ export const saveRefreshToken = async (user, refreshToken, res) => {
 
 
 export const verifyAccessToken = (token) => {
-  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  if (!JWT_SECRET) {
+    throw new Error('Missing JWT secret. Set ACCESS_TOKEN_SECRET (or JWT_SECRET) in environment variables.');
+  }
+  return jwt.verify(token, JWT_SECRET);
 };
