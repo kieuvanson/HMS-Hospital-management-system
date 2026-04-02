@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, Loader, X, Camera } from 'lucide-react';
 import Header from '../../components/Doctor/Header';
-import api from '../../services/api';
-
-const BACKEND_URL = 'http://localhost:5000';
+import api, { toBackendAssetUrl } from '../../services/api';
 
 // Hàm chuyển đổi avatar URL
 const getAvatarUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/')) return `${BACKEND_URL}${url}`;
-  return url;
+  return toBackendAssetUrl(url) || null;
 };
 
 const DoctorProfile = () => {

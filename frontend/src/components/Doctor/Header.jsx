@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Bell, Heart } from 'lucide-react';
-
-const BACKEND_URL = 'http://localhost:5000';
+import { toBackendAssetUrl } from '../../services/api';
 
 const getAvatarUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/')) return `${BACKEND_URL}${url}`;
-  return url;
+  return toBackendAssetUrl(url) || null;
 };
 
 const Header = ({ doctorName, onLogout }) => {

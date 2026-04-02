@@ -1,6 +1,15 @@
 import axios from 'axios';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+export const BACKEND_ORIGIN = API_URL.replace(/\/api$/, '');
+
+export const toBackendAssetUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('blob:')) return url;
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `${BACKEND_ORIGIN}${url}`;
+  return url;
+};
 
 const api = axios.create({
   baseURL: API_URL,

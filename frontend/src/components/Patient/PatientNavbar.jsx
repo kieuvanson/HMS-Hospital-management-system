@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Phone, Globe2, LogOut, CalendarPlus, ChevronDown } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toBackendAssetUrl } from '../../services/api';
 
 const PatientNavbar = () => {
   const navigate = useNavigate();
@@ -30,10 +31,7 @@ const PatientNavbar = () => {
 
   // Helper để lấy link avatar đầy đủ
   const getAvatarSrc = (avatarUrl) => {
-    if (!avatarUrl) return '';
-    if (avatarUrl.startsWith('blob:')) return avatarUrl;
-    if (avatarUrl.startsWith('http')) return avatarUrl;
-    return `http://localhost:5000${avatarUrl}`;
+    return toBackendAssetUrl(avatarUrl);
   };
 
   return (

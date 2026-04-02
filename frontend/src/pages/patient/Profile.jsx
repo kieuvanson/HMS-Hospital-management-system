@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { userAPI } from '../../services/api';
+import { userAPI, toBackendAssetUrl } from '../../services/api';
 import { Pencil, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -116,8 +116,7 @@ const Profile = () => {
     }
     // Nếu user.avatarUrl là link thực từ backend
     if (user.avatarUrl) {
-      if (user.avatarUrl.startsWith('http')) return user.avatarUrl;
-      return `http://localhost:5000${user.avatarUrl}`;
+      return toBackendAssetUrl(user.avatarUrl);
     }
     return '';
   };

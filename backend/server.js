@@ -14,14 +14,40 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const allowedOrigins = FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean);
+const FRONTEND_URL_REGEX = process.env.FRONTEND_URL_REGEX || '';
+
+const buildRegex = (pattern) => {
+  try {
+    return new RegExp(pattern);
+  } catch {
+    return null;
+  }
+};
+
+const allowedOrigins = FRONTEND_URL
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOriginRegexes = FRONTEND_URL_REGEX
+  .split(',')
+  .map((pattern) => pattern.trim())
+  .filter(Boolean)
+  .map(buildRegex)
+  .filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+  if (allowedOrigins.includes(origin)) return true;
+  return allowedOriginRegexes.some((regex) => regex.test(origin));
+};
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser clients (no Origin header)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { toBackendAssetUrl } from '../../services/api';
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,13 +15,8 @@ import {
   FileText
 } from 'lucide-react';
 
-const BACKEND_URL = 'http://localhost:5000';
-
 const getAvatarUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/')) return `${BACKEND_URL}${url}`;
-  return url;
+  return toBackendAssetUrl(url) || null;
 };
 
 const Sidebar = ({ doctor, loading }) => {

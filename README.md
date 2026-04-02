@@ -209,3 +209,32 @@ Frontend mac dinh: `http://localhost:5173`
 
 - Du an dang su dung endpoint backend tai `http://localhost:5000` trong frontend services.
 - Nen dong bo CORS origin trong `backend/server.js` theo cong frontend thuc te khi deploy.
+
+## Deploy Vercel + Railway
+
+Neu frontend deploy tren Vercel va backend deploy tren Railway, can set dung bien moi truong o ca 2 ben:
+
+### Frontend (Vercel)
+
+Tao bien moi truong:
+
+```env
+VITE_API_URL=https://your-backend.up.railway.app/api
+```
+
+Luu y: `VITE_API_URL` phai co `/api` o cuoi de khop voi router backend.
+
+### Backend (Railway)
+
+Tao bien moi truong:
+
+```env
+FRONTEND_URL=https://your-frontend.vercel.app,https://your-custom-domain.com
+FRONTEND_URL_REGEX=^https:\/\/.*\.vercel\.app$
+```
+
+Giai thich:
+- `FRONTEND_URL`: danh sach origin cho phep (tach boi dau phay).
+- `FRONTEND_URL_REGEX`: regex cho phep preview domain tren Vercel (neu ban dung preview deployments).
+
+Sau khi cap nhat bien moi truong, can redeploy ca frontend va backend.
