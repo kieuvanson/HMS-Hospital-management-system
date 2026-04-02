@@ -51,11 +51,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const requestUrl = String(originalRequest?.url || '');
+    const currentToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
     const isAuthEndpoint = requestUrl.includes('/auth/Sign_in')
       || requestUrl.includes('/auth/Sign_up')
       || requestUrl.includes('/auth/refresh_token');
 
-    if (error.response && error.response.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (
+      error.response
+      && error.response.status === 401
+      && !originalRequest._retry
+      && !isAuthEndpoint
+      && !!(currentToken && currentToken.trim())
+    ) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -82,7 +89,7 @@ api.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
         localStorage.removeItem('accessToken');
-        window.location.href = '/auth/login';
+        localStorage.removeItem('token');
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
