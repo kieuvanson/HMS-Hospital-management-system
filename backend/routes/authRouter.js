@@ -6,6 +6,7 @@ router_auth.post("/Sign_up", Sign_up);
 router_auth.post("/Sign_in", Sign_in);
 router_auth.post("/Sign_out", Sign_out);
 router_auth.post("/refresh_token", refreshToken);
+router_auth.get("/refresh_token", refreshToken);
 router_auth.post("/admin/create-doctor", createDoctorAccount);
 
 export default router_auth; 

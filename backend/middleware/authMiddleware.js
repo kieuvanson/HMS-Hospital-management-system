@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken';
 import User from '../models/User_Model.js';
+import { verifyAccessToken } from '../utils/jwt.js';
 
 export const protectedRoute = async(req, res, next) => {
   try {
@@ -9,9 +9,9 @@ export const protectedRoute = async(req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = verifyAccessToken(token);
 
-   const user = await User.findById(decoded.id).select('-password');
+  const user = await User.findById(decoded.id).select('-hashpassword');
 
         if (!user) {
             return res.status(401).json({ 

@@ -4,7 +4,8 @@ import Session from '../models/Session.js';
 const ACCESS_TOKEN_TTL= '7d';
 const refreshTokenTTL= 30*24*60*60*1000; 
 const isProduction = process.env.NODE_ENV === 'production';
-const JWT_SECRET = (
+
+const getJwtSecret = () => (
   process.env.ACCESS_TOKEN_SECRET ||
   process.env.JWT_SECRET ||
   ''
@@ -26,7 +27,8 @@ export const getRefreshCookieClearOptions = () => ({
 
 export const createAccessToken=(user) =>
        (() => {
-    if (!JWT_SECRET) {
+    const jwtSecret = getJwtSecret();
+    if (!jwtSecret) {
       throw new Error('Missing JWT secret. Set ACCESS_TOKEN_SECRET (or JWT_SECRET) in environment variables.');
     }
     return jwt.sign(
@@ -34,7 +36,7 @@ export const createAccessToken=(user) =>
       id: user._id,     
       role: user.role
     },
-    JWT_SECRET,
+    jwtSecret,
     { expiresIn: ACCESS_TOKEN_TTL }
   );
   })();
@@ -53,8 +55,9 @@ export const saveRefreshToken = async (user, refreshToken, res) => {
 
 
 export const verifyAccessToken = (token) => {
-  if (!JWT_SECRET) {
+  const jwtSecret = getJwtSecret();
+  if (!jwtSecret) {
     throw new Error('Missing JWT secret. Set ACCESS_TOKEN_SECRET (or JWT_SECRET) in environment variables.');
   }
-  return jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, jwtSecret);
 };
